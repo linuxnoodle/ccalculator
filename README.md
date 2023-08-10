@@ -2,10 +2,10 @@
 A fully functioning CAS written in pure C, with no external dependencies. 
 
 # Installation
-```
-git clone https://github.com/linuxnoodle/ccalculator
-cd ccalculator
-make
+```bash
+$ git clone https://github.com/linuxnoodle/ccalculator
+$ cd ccalculator
+$ make
 ```
 
 # Todo 
