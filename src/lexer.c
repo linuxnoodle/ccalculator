@@ -1,5 +1,4 @@
 #include "lexer.h"
-#include <string.h>
 
 void destroy_tokens(Tokens *tokens){
     for (size_t i = 0; i < tokens->length; ++i){
@@ -40,8 +39,7 @@ Tokens lex(char *in){
     TOKEN_TYPE current_state, last_state;
     current_state = last_state = TOKEN_FALLBACK;
 
-    // TODO: make proper vector type later
-    Token *tokens = (Token*) malloc(sizeof(Token));
+    Token *tokens = malloc(sizeof(Token));
     out.length = 0;
 
     char buffer[256];
@@ -57,7 +55,8 @@ Tokens lex(char *in){
         }
 
         if (current_state != last_state && buffer_index > 0){
-            tokens = (Token*) realloc(tokens, sizeof(Token) * (out.length + 1));
+            // really inneficient but I don't care
+            tokens = realloc(tokens, sizeof(Token) * (out.length + 1));
 
             tokens[out.length].type = last_state;
 
@@ -84,12 +83,12 @@ Tokens lex(char *in){
 
     // TODO: make this more compact
     if (buffer_index > 0){
-        tokens = (Token*) realloc(tokens, sizeof(Token) * (out.length + 1));
+        tokens = realloc(tokens, sizeof(Token) * (out.length + 1));
         last_state = current_state;
         
         tokens[out.length].type = current_state;
         
-        tokens[out.length].contents = (char*) malloc(sizeof(char) * buffer_index + 1);
+        tokens[out.length].contents = malloc(sizeof(char) * buffer_index + 1);
         memcpy(tokens[out.length].contents, buffer, buffer_index);
         tokens[out.length].contents[buffer_index] = '\0';
         

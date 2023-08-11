@@ -1,18 +1,25 @@
 #include "common.h"
 #include "lexer.h"
 #include "parser.h"
+#include "eval.h"
 
 int main(){
-    // example parsing 
-    char* s = "14 + (22 / 22)";
-    Tokens t = lex(s);
-    
-    printf("length: %lu\n", t.length);
-    for (size_t i = 0; i < t.length; ++i){
-        printf("%s: %d\n", t.tokens[i].contents, t.tokens[i].type);
-    }
-    printf("\n");
+    while (1) {
+        printf("> ");
 
-    destroy_tokens(&t);
+        char buffer[256];
+        if (scanf("%[^\n]%*c", buffer) == 0){
+            printf("Error: scanf did an oopsie woopsie\n");
+        }
+
+        Tokens t = lex(buffer);
+        Node *tree = form_tree(&t);
+        float res = evaluatef(tree);
+
+        printf("%s = %f\n", buffer, res);
+
+        destroy_tokens(&t);
+        destroy_tree(tree);
+    }
     return 0;
 }

@@ -4,15 +4,14 @@
 #include "common.h"
 #include "lexer.h"
 
-struct Node {
-    char *contents;
-};
 typedef struct Node Node;
-
-struct Tree {}
-    Node *node;
-    struct Tree *left;
-    struct Tree *right;
+struct Node {
+    Token *t;
+    Node *left, *right;
 };
+
+Node *form_tree(Tokens *tok);
+void destroy_tree(Node *node);
+void print_tree(Node *node, int depth);
 
 #endif /* end of include guard: PARSER */
