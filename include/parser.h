@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "lexer.h"
+#include "hash.h"
 
 typedef struct Node Node;
 struct Node {
@@ -12,6 +13,6 @@ struct Node {
 
 Node *form_tree(Tokens *tok);
 void destroy_tree(Node *node);
-void print_tree(Node *node, int depth);
+void print_tree(Node* head, int space);
 
 #endif /* end of include guard: PARSER */

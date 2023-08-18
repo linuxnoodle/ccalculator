@@ -4,6 +4,7 @@
 #include "eval.h"
 
 int main(){
+    initialize_table();
     while (1) {
         printf("> ");
 
@@ -14,9 +15,13 @@ int main(){
 
         Tokens t = lex(buffer);
         Node *tree = form_tree(&t);
-        float res = evaluatef(tree);
 
-        printf("%s = %f\n", buffer, res);
+        /*print_tree(tree, 0);
+        printf("\n");*/
+        
+        double res = evaluate_f(tree);
+
+        printf("%s = %g\n", buffer, res);
 
         destroy_tokens(&t);
         destroy_tree(tree);

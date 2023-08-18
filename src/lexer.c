@@ -26,6 +26,8 @@ TOKEN_TYPE get_associated_state(char c){
             return TOKEN_LPAREN;
         case ')':
             return TOKEN_RPAREN;
+        case '^':
+            return TOKEN_POW;
         default:
             return TOKEN_FALLBACK;
     }

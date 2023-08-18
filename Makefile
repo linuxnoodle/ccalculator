@@ -1,7 +1,7 @@
 PROJECT:=calculator
 
 CC:=gcc
-LDFLAGS=-Wall -O2 -Iinclude -ggdb
+LDFLAGS=-O2 -Iinclude -std=c99 -Wall -ggdb
 UNAME:=$(shell uname)
 
 SRCDIR:=src
