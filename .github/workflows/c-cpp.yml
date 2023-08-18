@@ -1,17 +1,19 @@
-name: C/C++ CI
+name: Main
 
-on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+on: push
 
+permissions:
+  contents: write
 jobs:
   build:
-
-    runs-on: linux
-
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: make
-      run: make
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Build
+        run: make
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: Release.txt
