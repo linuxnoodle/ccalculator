@@ -1,6 +1,6 @@
 #include "hash.h"
 
-TEXT_ENUM hash_table[128] = {0};
+TEXT_ENUM hash_table[256] = {0};
 
 void initialize_table(){
     memset(hash_table, 0, 128 * sizeof(TEXT_ENUM));
@@ -13,7 +13,7 @@ void initialize_table(){
 }
 
 size_t hash(char *str){
-    return *str; // first character (lol)
+    return *str + *(str + 1); // first two characters
 }
 
 char *get_key(TEXT_ENUM t){

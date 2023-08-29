@@ -24,7 +24,7 @@ static char text_names[KEYWORD_COUNT][16] = {
     "exp",
     "sqrt",
 };
-extern TEXT_ENUM hash_table[128];
+extern TEXT_ENUM hash_table[256];
 
 void initialize_table();
 size_t hash(char *str);
