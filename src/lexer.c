@@ -8,7 +8,7 @@ void destroy_tokens(Tokens *tokens){
 }
 
 TOKEN_TYPE get_associated_state(char c){
-    if (c >= '0' && c <= '9'){
+    if ((c >= '0' && c <= '9') || c == '.'){
         return TOKEN_NUMBER;
     } else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')){
         return TOKEN_TEXT;

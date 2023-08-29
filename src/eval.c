@@ -23,7 +23,7 @@ double exp_f(double exponent){
     // compute e^x as a taylor series
     double sum = 1;
     double term = 1;
-    for (int i = 1; i < 50; ++i){
+    for (int i = 1; i < exponent + 100; i++){
         term *= exponent / i;
         sum += term;
     }
@@ -31,13 +31,15 @@ double exp_f(double exponent){
 }
 
 double log_f(double input){
+    // taylor series for log(1 + x) 
     double a = 1;
     double y = (input - a) / (input + a);
     double sum = 2 * y;
     double term = 2 * y;
-    // taylor series for log(1 + x) 
-    // convergence is rather slow, so 500 terms are used
-    for (int i = 3; i < 500; i += 2){
+    // convergence is rather slow, 
+    // so terms are in relation to the input size
+    // TODO: find more efficient alg
+    for (int i = 3; i < input * 2 + 100; i += 2){
         term *= y * y;
         sum += term / i;
     }
