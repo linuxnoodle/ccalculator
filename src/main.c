@@ -1,30 +1,57 @@
 #include "common.h"
+#include "hash.h"
 #include "lexer.h"
 #include "parser.h"
 #include "eval.h"
 
-int main(){
-    initialize_table();
-    while (1) {
-        printf("> ");
+#include <signal.h>
 
-        char buffer[256];
-        if (scanf("%[^\n]%*c", buffer) == 0){
-            printf("Error: scanf did an oopsie woopsie\n");
-        }
-
-        Tokens t = lex(buffer);
-        Node *tree = form_tree(&t);
-
-        /*print_tree(tree, 0);
-        printf("\n");*/
-        
-        double res = evaluate_f(tree);
-
-        printf("%s = %g\n", buffer, res);
-
-        destroy_tokens(&t);
-        destroy_tree(tree);
+void stop(int sig){ 
+    printf("\nAre you sure you want to exit? (y/n) ");
+    char c = getchar();
+    switch (c){
+        case 'n':
+            printf("> ");
+            break;
+        case 'y':
+            exit(0);
+            break;
+        case 3:
+            exit(0);
+            break;
+        default:
+            printf("Invalid input\n");
+            break;
     }
-    return 0;
+}
+
+int main(){
+    // signal doohickeys
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(struct sigaction));
+    sa.sa_handler = stop;
+    sa.sa_flags = 0;
+
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGQUIT, &sa, NULL);
+
+    char *input;
+    size_t len;
+
+    Tokens t;
+    Node *n;
+
+    initialize_table();
+    while (1){
+        printf("> ");
+        getline(&input, &len, stdin);
+
+        t = lex(input);
+        n = form_tree(&t);
+
+        printf("%s = %f\n", input, evaluate_f(n));
+    }
+    destroy_tree(n);
+    destroy_tokens(&t);
+    free(input);
 }

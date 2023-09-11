@@ -1,14 +1,12 @@
 #include "lexer.h"
+#include <string.h>
 
 void destroy_tokens(Tokens *tokens){
-    for (size_t i = 0; i < tokens->length; ++i){
-        free(tokens->tokens[i].contents);
-    }
     free(tokens->tokens);
 }
 
 TOKEN_TYPE get_associated_state(char c){
-    if ((c >= '0' && c <= '9') || c == '.'){
+    if (c >= '0' && c <= '9'){
         return TOKEN_NUMBER;
     } else if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')){
         return TOKEN_TEXT;
@@ -26,8 +24,6 @@ TOKEN_TYPE get_associated_state(char c){
             return TOKEN_LPAREN;
         case ')':
             return TOKEN_RPAREN;
-        case '^':
-            return TOKEN_POW;
         default:
             return TOKEN_FALLBACK;
     }
@@ -41,7 +37,8 @@ Tokens lex(char *in){
     TOKEN_TYPE current_state, last_state;
     current_state = last_state = TOKEN_FALLBACK;
 
-    Token *tokens = malloc(sizeof(Token));
+    // really stupid way of dynamically allocating, make proper vector type later
+    Token *tokens = (Token*) malloc(sizeof(Token));
     out.length = 0;
 
     char buffer[256];
@@ -56,49 +53,25 @@ Tokens lex(char *in){
             continue;
         }
 
-        if (current_state != last_state && buffer_index > 0){
-            // really inneficient but I don't care
-            tokens = realloc(tokens, sizeof(Token) * (out.length + 1));
+        if (current_state != last_state || i == len - 1){
+            // if we're in a buffer, flush it
+            if (buffer_index > 0){
+                // malloc new token 
+                tokens = (Token*) realloc(tokens, sizeof(Token) * (out.length + 1));
+                last_state = current_state;
 
-            tokens[out.length].type = last_state;
+                tokens[out.length].type = current_state;
+                tokens[out.length].contents = buffer;
+                memset(buffer, 0, 256);
+                ++out.length;
 
-            tokens[out.length].contents = (char*) malloc(sizeof(char) * buffer_index + 1);
-            memcpy(tokens[out.length].contents, buffer, buffer_index);
-            tokens[out.length].contents[buffer_index] = '\0';
-        
-            tokens[out.length].length = buffer_index;
-
-            memset(buffer, 0, 256);
-            ++out.length;
-            buffer_index = 0;
-
-            buffer[buffer_index] = in[i];
-            ++buffer_index;
-
-            last_state = current_state;
+                buffer_index = 0;
+            }
         } else {
             buffer[buffer_index] = in[i];
             ++buffer_index;
         }
         last_state = current_state;
-    }
-
-    // TODO: make this more compact
-    if (buffer_index > 0){
-        tokens = realloc(tokens, sizeof(Token) * (out.length + 1));
-        last_state = current_state;
-        
-        tokens[out.length].type = current_state;
-        
-        tokens[out.length].contents = malloc(sizeof(char) * buffer_index + 1);
-        memcpy(tokens[out.length].contents, buffer, buffer_index);
-        tokens[out.length].contents[buffer_index] = '\0';
-        
-        tokens[out.length].length = buffer_index;
-            
-        memset(buffer, 0, 256);
-        ++out.length;
-        buffer_index = 0;
     }
 
     out.tokens = tokens;
