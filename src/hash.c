@@ -3,7 +3,7 @@
 TEXT_ENUM hash_table[256] = {0};
 
 void initialize_table(){
-    memset(hash_table, 0, 128 * sizeof(TEXT_ENUM));
+    memset(hash_table, 0, 256 * sizeof(TEXT_ENUM));
     for (int i = 0; i < KEYWORD_COUNT; ++i){
         // set to enum 
         hash_table[
