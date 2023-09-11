@@ -1,0 +1,71 @@
+#include "test.h"
+
+#include "lexer.h"
+#include "parser.h"
+#include "eval.h"
+#include "hash.h"
+
+bool file_exists(const char *path) {
+    struct stat buffer;
+    return !stat(path, &buffer);
+}
+
+char *read_file(const char *path) {
+    char *buffer = NULL;
+    long length;
+    FILE *f = fopen(path, "rb");
+    if (!f){
+        fprintf(stderr, "Error: Could not open file %s\n", path);
+        exit(EXIT_FAILURE);
+    }
+    
+    fseek(f, 0, SEEK_END);
+    length = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    
+    buffer = malloc(length);
+    if (!buffer) {
+        fprintf(stderr, "Error: Could not allocate memory for file %s\n", path);
+        exit(EXIT_FAILURE);
+    }
+    
+    int k = fread(buffer, 1, length, f);
+    if (k != length) {
+        fprintf(stderr, "Error: Could not read file %s\n", path);
+        exit(EXIT_FAILURE);
+    }
+    fclose(f);
+
+    return buffer;
+}
+
+void run_tests(){
+    const char *fileName = "tests.csv";
+    if (!file_exists(fileName)) {
+        fprintf(stderr, "Error: Could not find file %s\n", fileName);
+        exit(EXIT_FAILURE);
+    }
+
+    char *csv = read_file(fileName);
+    printf("%s\n", csv);
+    char *line = strtok(csv, "\n\r");
+    while (line != NULL) {
+        char *test = strtok(line, ",");
+        char *expected = strtok(NULL, ",");
+
+        Tokens tokens = lex(test);
+        Node *node = form_tree(&tokens);
+        double actual = evaluate_f(node);
+        
+        if (actual - atof(expected) > 0.0001){ // double shenanigans
+            printf("Test %s failed. Expected %s, got %g.\n", test, expected, actual);
+        } else {
+            printf("Test %s passed.\n", test);
+        }
+        destroy_tree(node);
+        destroy_tokens(&tokens);
+
+        line = strtok(NULL, "\n\r");
+        printf("Next line: %s\n", line);
+    }
+}

@@ -44,9 +44,9 @@ Tokens lex(char *in){
     Token *tokens = malloc(sizeof(Token));
     out.length = 0;
 
+    // TODO: allow for dynamic buffer size
     char buffer[256];
     memset(buffer, 0, 256);
-
     size_t buffer_index = 0;
     for (size_t i = 0; i < len; ++i){
         TOKEN_TYPE tmp = get_associated_state(in[i]);

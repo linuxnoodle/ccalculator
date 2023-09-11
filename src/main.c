@@ -3,8 +3,14 @@
 #include "lexer.h"
 #include "parser.h"
 #include "eval.h"
+#include "test.h"
 
-int main(){
+int main(int argc, char **argv){
+    if (argc == 2 && !strcmp(argv[1], "-t")){
+        run_tests();
+        return 0;
+    }
+
     char *input;
     Tokens t;
     Node *n;
@@ -21,7 +27,7 @@ int main(){
         t = lex(input);
         n = form_tree(&t);
 
-        printf("%s = %f\n", input, evaluate_f(n));
+        printf("%s = %g\n", input, evaluate_f(n));
         destroy_tree(n);
         destroy_tokens(&t);
         free(input);
