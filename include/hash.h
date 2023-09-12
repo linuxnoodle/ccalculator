@@ -13,6 +13,12 @@ typedef enum {
     SQRT = 6,
 } TEXT_ENUM; 
 
+typedef struct {
+    TEXT_ENUM text;
+    double *parameters;
+    char *str;
+} function;
+
 #define KEYWORD_COUNT 6
 // max keyword name length is 15
 __attribute__((__used__))
@@ -24,7 +30,7 @@ static char text_names[KEYWORD_COUNT][16] = {
     "exp",
     "sqrt",
 };
-extern TEXT_ENUM hash_table[256];
+extern TEXT_ENUM hash_table[384];
 
 void initialize_table();
 size_t hash(char *str);

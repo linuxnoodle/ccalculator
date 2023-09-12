@@ -47,11 +47,20 @@ void run_tests(){
     }
 
     char *csv = read_file(fileName);
-    printf("%s\n", csv);
     char *line = strtok(csv, "\n\r");
+
     while (line != NULL) {
-        char *test = strtok(line, ",");
-        char *expected = strtok(NULL, ",");
+        char *test = NULL, *expected = NULL;
+        // necessary because intermediary strtok 
+        // overwrites the original \n delimiter
+        for (int i = 0; i < strlen(line); i++) {
+            if (line[i] == ',') {
+                line[i] = '\0';
+                test = line;
+                expected = line + i + 1;
+                break;
+            }
+        }
 
         Tokens tokens = lex(test);
         Node *node = form_tree(&tokens);
@@ -66,6 +75,5 @@ void run_tests(){
         destroy_tokens(&tokens);
 
         line = strtok(NULL, "\n\r");
-        printf("Next line: %s\n", line);
     }
 }

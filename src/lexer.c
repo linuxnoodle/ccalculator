@@ -33,6 +33,41 @@ TOKEN_TYPE get_associated_state(char c){
     }
 }
 
+bool check_token_validity(Tokens *tokens){
+    for (size_t i = 0; i < tokens->length - 1; ++i){
+        if (tokens->tokens[i].type == TOKEN_NUMBER
+        && tokens->tokens[i + 1].type == TOKEN_NUMBER){
+            fprintf(stderr, "Error: You probably forgot to add an operator.\n");
+            return false;
+        }
+    }
+    return true;
+}
+
+// this hurts to write
+void push_buffer(char *buffer,
+                 char *in,
+                 Tokens *out,
+                 Token *tokens,
+                 size_t *buffer_index,
+                 TOKEN_TYPE state,
+                 size_t i){
+    tokens = realloc(tokens, sizeof(Token) * (out->length + 1));
+
+    tokens[out->length].type = state;
+
+    tokens[out->length].contents = (char*) malloc(sizeof(char) * (*buffer_index) + 1);
+    printf("allocing %zu bytes\n", sizeof(char) * (*buffer_index) + 1);
+    memcpy(tokens[out->length].contents, buffer, *buffer_index);
+    tokens[out->length].contents[*buffer_index] = '\0';
+    printf("setting length to %zu\n", *buffer_index);
+    tokens[out->length].length = *buffer_index;
+
+    memset(buffer, 0, 256);
+    ++out->length;
+    *buffer_index = 0;
+}
+
 // return array of tokens
 Tokens lex(char *in){
     Tokens out;
@@ -52,55 +87,47 @@ Tokens lex(char *in){
         TOKEN_TYPE tmp = get_associated_state(in[i]);
         if (tmp != TOKEN_FALLBACK){
             current_state = tmp;
+        } else if (last_state != TOKEN_FALLBACK){
+            /*push_buffer(buffer,
+                        in,
+                        out,
+                        tokens,
+                        &buffer_index,
+                        last_state, 
+                        i);
+            buffer[buffer_index] = in[i];
+            ++(buffer_index);*/
+
+            continue;
         } else {
             continue;
         }
 
         if (current_state != last_state && buffer_index > 0){
-            // really inneficient but I don't care
-            tokens = realloc(tokens, sizeof(Token) * (out.length + 1));
-
-            tokens[out.length].type = last_state;
-
-            tokens[out.length].contents = (char*) malloc(sizeof(char) * buffer_index + 1);
-            memcpy(tokens[out.length].contents, buffer, buffer_index);
-            tokens[out.length].contents[buffer_index] = '\0';
-        
-            tokens[out.length].length = buffer_index;
-
-            memset(buffer, 0, 256);
-            ++out.length;
-            buffer_index = 0;
-
-            buffer[buffer_index] = in[i];
-            ++buffer_index;
-
-            last_state = current_state;
-        } else {
-            buffer[buffer_index] = in[i];
-            ++buffer_index;
+            push_buffer(buffer,
+                        in,
+                        &out,
+                        tokens,
+                        &buffer_index,
+                        last_state, 
+                        i);
         }
+        buffer[buffer_index] = in[i];
+        ++buffer_index;
         last_state = current_state;
     }
 
     // TODO: make this more compact
     if (buffer_index > 0){
-        tokens = realloc(tokens, sizeof(Token) * (out.length + 1));
-        last_state = current_state;
-        
-        tokens[out.length].type = current_state;
-        
-        tokens[out.length].contents = malloc(sizeof(char) * buffer_index + 1);
-        memcpy(tokens[out.length].contents, buffer, buffer_index);
-        tokens[out.length].contents[buffer_index] = '\0';
-        
-        tokens[out.length].length = buffer_index;
-            
-        memset(buffer, 0, 256);
-        ++out.length;
-        buffer_index = 0;
+        // use current state 
+        push_buffer(buffer,
+                    in,
+                    &out,
+                    tokens,
+                    &buffer_index,
+                    current_state, 
+                    len);
     }
-
     out.tokens = tokens;
     return out;
 }

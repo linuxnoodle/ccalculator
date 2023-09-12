@@ -130,7 +130,7 @@ double evaluate_f(Node *tree){
         case TOKEN_TEXT:
             // will be a pain to add functions with more than 1 parameter
             // have to migrate from binary tree holding the AST to a general tree 
-            return lookup(tree->t->text, right, left);         
+            return lookup(tree->t->func.text, right, left);         
         default:
             printf("ERROR: invalid token type\n");
             return 0;

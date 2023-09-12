@@ -2,7 +2,8 @@
 #define LEXER
 
 #include "common.h"
-#include "hash.h" // only for TEXT_ENUM
+#include "hash.h" // for functions
+#include <stdbool.h>
 
 typedef enum {
     TOKEN_FALLBACK = 0,
@@ -18,10 +19,10 @@ typedef enum {
 } TOKEN_TYPE;
 
 typedef struct {
+    function func;
     TOKEN_TYPE type;
     char *contents;
     size_t length;
-    TEXT_ENUM text; // no polymorphism :(
 } Token;
 
 typedef struct {
@@ -29,6 +30,7 @@ typedef struct {
     size_t length;
 } Tokens;
 
+bool check_token_validity(Tokens *tokens);
 void destroy_tokens(Tokens *tokens);
 Tokens lex(char *in);
 

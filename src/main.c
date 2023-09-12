@@ -25,7 +25,19 @@ int main(int argc, char **argv){
         }
 
         t = lex(input);
+        printf("size: %ld", t.length);
+        for (size_t i = 0; i < t.length; ++i){
+            printf("TOKEN: %s\n", t.tokens[i].contents);
+        }
         n = form_tree(&t);
+        print_tree(n, 0);
+
+        if (!check_token_validity(&t)){
+            destroy_tree(n);
+            destroy_tokens(&t);
+            free(input);
+            continue;
+        }
 
         printf("%s = %g\n", input, evaluate_f(n));
         destroy_tree(n);

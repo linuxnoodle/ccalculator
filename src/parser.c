@@ -55,12 +55,24 @@ Node *recurse_collect(Tokens *tok, char *precedence, size_t start, size_t end){
         printf("Operator found: %s\n", tok->tokens[lowest_precedence_index].contents);
     }*/
     Node *node = create_node(&tok->tokens[lowest_precedence_index]);
-    if (tok->tokens[start].type == TOKEN_TEXT){ // don't steal left token if function
+    if (tok->tokens[start].type == TOKEN_TEXT){ // fill with all parameters
         node->left = create_empty_node();
+        node->right = recurse_collect(tok,
+                                     precedence,
+                                     lowest_precedence_index + 1,
+                                     end);
+        
+        return node;
     } else {
-        node->left = recurse_collect(tok, precedence, start, lowest_precedence_index);
+        node->left = recurse_collect(tok,
+                                     precedence,
+                                     start,
+                                     lowest_precedence_index);
     }
-    node->right = recurse_collect(tok, precedence, lowest_precedence_index + 1, end);
+    node->right = recurse_collect(tok,
+                                  precedence,
+                                  lowest_precedence_index + 1,
+                                  end);
     return node;
 }
 
@@ -103,7 +115,7 @@ Node *form_tree(Tokens *tok){
                 && *tok->tokens[i].contents == *get_key(name)
                 && !strcmp(tok->tokens[i].contents + 1, get_key(name) + 1)){ 
                     precedence[i] = 5;
-                    tok->tokens[i].text = name;
+                    tok->tokens[i].func.text = name;
                     continue;
                 }
                 break;
@@ -114,7 +126,10 @@ Node *form_tree(Tokens *tok){
         }
     }
 
-    return recurse_collect(tok, precedence, 0, tok->length);
+    return recurse_collect(tok,
+                           precedence,
+                           0,
+                           tok->length);
 }
 
 void print_tree(Node* head, int space){
@@ -127,7 +142,8 @@ void print_tree(Node* head, int space){
     printf("\n");
     for (int i = 4; i < space; ++i)
         printf(" ");
-    printf("%s\n", head->t->contents);
+    if (head->t != NULL)
+        printf("%s\n", head->t->contents);
 
     print_tree(head->left, space);
 }
