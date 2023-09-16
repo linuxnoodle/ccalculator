@@ -21,7 +21,6 @@ char* getln(char **history, size_t *history_size){
             case 127:
                 if (size > 1){
                     line = realloc(line, --size);
-                    line[size - 1] = '\0';
                     printf("\b \b");
                     fflush(stdout);
                 } else if (size == 1){
@@ -74,7 +73,7 @@ int main(int argc, char **argv){
             continue;
         }
         t = lex(input);
-        n = form_tree(&t);
+        n = parse(&t);
         print_tree(n, 0);
 
         if (!check_token_validity(&t)){
@@ -84,6 +83,7 @@ int main(int argc, char **argv){
         }
 
         printf("%s = %g\n", input, evaluate_f(n));
+        //printf("%s = %s\n", input, evaluate_exact(n));
         destroy_tree(n);
         destroy_tokens(&t);
 

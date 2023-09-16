@@ -10,5 +10,6 @@
 #define LOG2_10 3.32192809488736
 
 double evaluate_f(Node *tree);
+char *evaluate_exact(Node *tree);
 
 #endif /* end of include guard: EVAL */

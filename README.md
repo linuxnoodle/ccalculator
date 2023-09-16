@@ -16,8 +16,6 @@ $ make
     - [X] Form basic arithmetic operators into a tree
     - [X] Manage order of operations 
     - [X] Add functions (e.g, sin, cos, sqrt)
-- [ ] Add IMGUI graphical support
-- [ ] Add LaTeX/KaTeX support for WYSIWYG formatting
 
 # License 
 This project is under the [GPLv2 License](/LICENSE.txt)

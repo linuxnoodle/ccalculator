@@ -1,7 +1,9 @@
 PROJECT:=calculator
 
 CC:=gcc
-LDFLAGS=-O2 -Iinclude -std=c99 -Wall -ggdb
+LDFLAGS=-Wall -Wextra -Wpedantic -Werror -O2 -ggdb
+#LDFLAGS=-Wall -Wextra -Wpedantic -Og -g3 -ggdb -fsanitize=address,undefined
+CXXFLAGS=-std=c99 -Iinclude
 UNAME:=$(shell uname)
 
 SRCDIR:=src
@@ -14,7 +16,7 @@ $(PROJECT): $(OBJ)
 	$(CC) $(OBJ) $(LDFLAGS) -o $@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
-	$(CC) $(LDFLAGS) -c $< -o $@
+	$(CC) $(CXXFLAGS) -c $< -o $@
 	
 $(OBJDIR):
 	mkdir $(OBJDIR)

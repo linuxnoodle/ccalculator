@@ -8,5 +8,6 @@
 #include <unistd.h>
 #include <termio.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 #endif /* end of include guard: COMMON */

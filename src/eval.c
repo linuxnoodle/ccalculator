@@ -136,3 +136,51 @@ double evaluate_f(Node *tree){
             return 0;
     }
 }
+
+bool is_numeric(char *str){
+    for (int i = 0; i < strlen(str); i++){
+        if (!isdigit(str[i]) && str[i] != '.'){
+            return false;
+        }
+    }
+    return true;
+}
+
+// TODO
+char *get_analytic_result(Node *n){
+    if (n->t->type != TOKEN_TEXT){
+        return "YOU FUCKED UP"; // should never be ran
+    }
+    switch (n->t->func.text){
+        // check if exact multiple of pi
+        case SIN:
+        case COS:
+        case TAN:
+            break;
+        case SQRT:
+            break;
+        default:
+            break;
+    }
+}
+
+char *evaluate_exact(Node *tree){
+    if (!tree->left && !tree->right){
+        return tree->t->contents;
+    }
+    // if the operation isn't a function, evaluate 
+    if (tree->t->type != TOKEN_TEXT){
+        char *left = evaluate_exact(tree->left);
+        char *right = evaluate_exact(tree->right);
+        char *str = malloc(sizeof(char) * 100);
+        sprintf(str, "(%s %s %s)", left, tree->t->contents, right);
+        return str;
+    } else {
+        return get_analytic_result(tree);
+    }
+    char *left = evaluate_exact(tree->left);
+    char *right = evaluate_exact(tree->right);
+    char *str = malloc(sizeof(char) * 100);
+    sprintf(str, "%s%s", left, right);
+    return str;
+}
