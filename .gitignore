@@ -1,3 +1,4 @@
 obj/
 compile_flags.txt
 calculator
+vgcore*

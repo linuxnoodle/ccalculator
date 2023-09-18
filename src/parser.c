@@ -40,7 +40,7 @@ int *get_precedences(Tokens *tokens){
     int *precedences = malloc(sizeof(int) * tokens->length);
     int parentheses = 0;
     for (int i = 0; i < tokens->length; ++i){
-        switch (tokens->tokens->type){
+        switch (tokens[i].tokens->type){
             case TOKEN_FALLBACK:
             case TOKEN_NUMBER:
                 precedences[i] = -1;
@@ -72,63 +72,80 @@ int *get_precedences(Tokens *tokens){
     return precedences;
 }
 
-Node *parse(Tokens *tokens){
+Node *create_node(Token *t){
+    Node *node = malloc(sizeof(Node));
+    node->t = t;
+    node->left = NULL;
+    node->right = NULL;
+    return node;
+}
+
+Node *create_empty_node(){
+    Token *t = malloc(sizeof(Token));
+    char *s = "0";
+
+    t->type = TOKEN_NUMBER;
+    t->contents = s;
+    t->length = 1;
+
+    return create_node(t);
+}
+
+Node *recurse_collect(Tokens *tokens, int *precedence, size_t start, size_t end){
+    if (start == end)
+        return create_empty_node();
+
+    int lowest_precedence = 1000;
+    int lowest_precedence_index = -1;
+    for (size_t i = start; i < end; ++i){
+        if (precedence[i] > 0 && precedence[i] < lowest_precedence) {
+            lowest_precedence = precedence[i];
+            lowest_precedence_index = i;
+        }
+    }
+
+    if (lowest_precedence_index == -1){
+        // no operators found, must be a number
+        // hacky but whatever
+        if (tokens->tokens[start].type == TOKEN_LPAREN){
+            return recurse_collect(tokens, precedence, start + 1, end);
+        }
+        return create_node(&tokens->tokens[start]);
+    }
+
+    Node *node = create_node(&tokens->tokens[lowest_precedence_index]);
+    if (tokens->tokens[start].type == TOKEN_TEXT){
+        node->left = create_empty_node();
+        node->right = recurse_collect(tokens, precedence, start + 1, end);
+        return node;
+    } else {
+        node->left = recurse_collect(tokens, precedence, start, lowest_precedence_index);
+        node->right = recurse_collect(tokens, precedence, lowest_precedence_index + 1, end);
+        return node;
+    }
+}
+
+Node *parse(Tokens *tokens) {
     // iteratively create parse tree using stack
     // preserve order of operations
     stack *s = stack_new(sizeof(Node *));
     int *precedences = get_precedences(tokens);
-
-    Node *root, *current;
-    root = current = malloc(sizeof(Node));
-    
-    // push tokens to stack according to precedence
-    while (s->length > 0 || current != NULL){
-        if (current != NULL){
-            stack_push(s, &current);
-            current = NULL;
-        } else {
-            current = *(Node **)stack_pop(s);
-            if (current->t->type == TOKEN_LPAREN){
-                free(current);
-                current = NULL;
-            } else if (current->t->type == TOKEN_RPAREN){
-                free(current);
-                current = *(Node **)stack_pop(s);
-                if (current->t->type != TOKEN_LPAREN){
-                    fprintf(stderr, "Error: mismatched parentheses\n");
-                    return NULL;
-                }
-                free(current);
-                current = NULL;
-            } else {
-                if (s->length == 0)
-                    break;
-                Node *parent = *(Node **)stack_peek(s);
-                if (precedences[parent->t->index] < precedences[current->t->index]){
-                    // parent has lower precedence, so it's a child of current
-                    current->left = parent;
-                    *(Node **)stack_pop(s);
-                    stack_push(s, &current);
-                    current = NULL;
-                } else {
-                    // parent has higher precedence, so current is a child of parent
-                    parent->right = current;
-                    current = parent;
-                }
-            }
-        }
+    printf("\n");
+    for (int i = 0; i < tokens->length; ++i){
+        printf("%c: %d\n", tokens->tokens[i].contents[0], precedences[i]);
     }
+    return recurse_collect(tokens, precedences, 0, tokens->length);
 }
 
 void print_tree(Node *root, int space){
     if (root == NULL)
         return;
-    space += 10;
+    space += 4;
     print_tree(root->right, space);
     printf("\n");
-    for (int i = 10; i < space; ++i)
+    for (int i = 4; i < space; i++)
         printf(" ");
-    printf("%d\n", root->t->type);
+    printf("%s\n", root->t->contents);
     print_tree(root->left, space);
 }
 
