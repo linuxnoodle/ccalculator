@@ -15,7 +15,8 @@ typedef enum {
 
 typedef struct {
     TEXT_ENUM text;
-    double *parameters;
+    char **parameters;
+    size_t param_count;
     char *str;
 } function;
 

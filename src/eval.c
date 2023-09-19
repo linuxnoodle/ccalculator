@@ -86,23 +86,27 @@ double tan_f(double input){
 }
 /* ================== END TRIG FUNCTIONS ================== */
 
-double lookup(TEXT_ENUM type, double param, double coef){
-    if (coef == 0)
-        coef = 1;
+double lookup(TEXT_ENUM type, char** params){
+    // get first parameter
+    if (!params){
+        printf("ERROR: no parameters given\n");
+        return 0;
+    }
+    double param = atof(params[0]);
     switch (type){
         // functions
         case SIN:
-            return coef * sin_f(param);
+            return sin_f(param);
         case COS: 
-            return coef * cos_f(param);
+            return cos_f(param);
         case TAN:
-            return coef * tan_f(param);
+            return tan_f(param);
         case LN:
-            return coef * log_f(param);
+            return log_f(param);
         case EXP:
-            return coef * exp_f(param);
+            return exp_f(param);
         case SQRT:
-            return coef * pow_f(param, 0.5);
+            return pow_f(param, 0.5);
         // constants
         default:
             printf("ERROR: invalid name\n");
@@ -111,11 +115,15 @@ double lookup(TEXT_ENUM type, double param, double coef){
 }
 
 double evaluate_f(Node *tree){
+    double left = 0, right = 0;
     if (!tree->left && !tree->right){
-        return atof(tree->t->contents);
+        if (tree->t->type != TOKEN_TEXT)
+            return atof(tree->t->contents);
+    } else {
+        left = evaluate_f(tree->left);
+        right = evaluate_f(tree->right);
     }
-    double left = evaluate_f(tree->left);
-    double right = evaluate_f(tree->right);
+
     switch (tree->t->type){
         case TOKEN_PLUS:
             return left + right;
@@ -128,9 +136,7 @@ double evaluate_f(Node *tree){
         case TOKEN_POW:
             return pow_f(left, right);
         case TOKEN_TEXT:
-            // will be a pain to add functions with more than 1 parameter
-            // have to migrate from binary tree holding the AST to a general tree 
-            return lookup(tree->t->func.text, right, left);         
+            return lookup(tree->t->func.text, tree->t->func.parameters);         
         default:
             printf("ERROR: invalid token type\n");
             return 0;

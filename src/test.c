@@ -63,7 +63,7 @@ void run_tests(){
         }
 
         Tokens tokens = lex(test);
-        Node *node = parse(&tokens);
+        Node *node = parse(tokens);
         double actual = evaluate_f(node);
         
         if (actual - atof(expected) > 0.0001){ // double shenanigans

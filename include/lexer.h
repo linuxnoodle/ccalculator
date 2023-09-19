@@ -15,7 +15,8 @@ typedef enum {
     TOKEN_POW = 6,
     TOKEN_LPAREN = 7,
     TOKEN_RPAREN = 8,
-    TOKEN_TEXT = 9,
+    TOKEN_COMMA = 9,
+    TOKEN_TEXT = 10,
 } TOKEN_TYPE;
 
 typedef struct {

@@ -13,7 +13,7 @@ struct Node {
     function *f; // NULL by default
 };
 
-Node *parse(Tokens *tok);
+Node *parse(Tokens tok);
 void destroy_tree(Node *node);
 void print_tree(Node* head, int space);
 
