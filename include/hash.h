@@ -15,7 +15,7 @@ typedef enum {
 
 typedef struct {
     TEXT_ENUM text;
-    char **parameters;
+    void **parameters; // is really a Node**, but it's technically a circular dependency
     size_t param_count;
     char *str;
 } function;

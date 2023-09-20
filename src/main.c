@@ -73,8 +73,8 @@ int main(int argc, char **argv){
             continue;
         }
         t = lex(input);
-        /*printf("\n");
-        for (size_t i = 0; i < t.length; i++)
+        printf("\n");
+        /*for (size_t i = 0; i < t.length; i++)
             printf("%s: ID%d\n", t.tokens[i].contents, t.tokens[i].type);*/
         n = parse(t);
         //print_tree(n, 0);

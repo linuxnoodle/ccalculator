@@ -137,15 +137,38 @@ Node *recurse_collect(Tokens tokens, int *precedence, size_t start, size_t end){
                         --parentheses;
                     ++i;
                 }
-                // iterate through all tokens between parentheses
-                // and malloc a char** to store in node->t->func.parameters
-                node->t->func.parameters = malloc(sizeof(char *) * (i - start - 3));
+                // collect each token into groups, delimit by commas
+                // recurse_collect on each group
+                char **groupings = malloc(sizeof(char*) * (i - start - 3));
+                size_t groupings_index = 0;
+                size_t group_start = start + 2;
+                for (size_t j = start + 2; j < i - 1; ++j){
+                    if (tokens.tokens[j].type == TOKEN_COMMA){
+                        groupings[groupings_index] = malloc(sizeof(char) * (j - group_start + 1));
+                        strncpy(groupings[groupings_index], tokens.tokens[j].contents, j - group_start);
+                        groupings[groupings_index][j - group_start] = '\0';
+                        ++groupings_index;
+                        group_start = j + 1;
+                    }
+                }
+
+                // and malloc a Node** to store all subtrees for each parameter
+                /*node->t->func.parameters = malloc(sizeof(Node*) * (i - start - 3));
                 node->t->func.param_count = i - start - 3;
                 for (size_t j = start + 2; j < i - 1; ++j){
-                    node->t->func.parameters[j - start - 2] = tokens.tokens[j].contents;
+                    //node->t->func.parameters[j - start - 2] = tokens.tokens[j].contents;
+                    node->t->func.parameters[j - start - 2] = recurse_collect(tokens, precedence, j, j + 1);
+                    printf("\nSTART SUBTREE:\n");
+                    print_tree(node->t->func.parameters[j - start - 2], 0);
+                }*/
+
+                // for every grouping, recurse_collect and store in node->t->func.parameters
+                node->t->func.param_count = groupings_index + 1;
+                node->t->func.parameters = malloc(sizeof(Node*) * (groupings_index + 1));
+                for (size_t j = 0; j < groupings_index + 1; ++j){
+                    node->t->func.parameters[j] = recurse_collect(tokens, precedence, group_start, i - 1);
+                    group_start = i;
                 }
-            } else {
-                printf("kill yourself\n");
             }
         }
         return node;
@@ -176,7 +199,7 @@ void print_tree(Node *root, int space){
         // print parameters as well
         printf("PARAMETERS: ");
         for (size_t i = 0; i < root->t->func.param_count; ++i){
-            printf("%s", root->t->func.parameters[i]);
+            printf("%s", ((Node*)root->t->func.parameters[i])->t->contents);
             if (i != root->t->func.param_count - 1)
                 printf(", ");
         }

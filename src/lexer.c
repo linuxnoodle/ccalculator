@@ -42,8 +42,18 @@ bool check_token_validity(Tokens *tokens){
     for (size_t i = 0; i < tokens->length - 1; ++i){
         if (tokens->tokens[i].type == TOKEN_NUMBER
         && tokens->tokens[i + 1].type == TOKEN_NUMBER){
-            fprintf(stderr, "Error: You probably forgot to add an operator.\n");
+            fprintf(stderr, "Error: You probably forgot to add an operator(s) or comma(s).\n");
             return false;
+        }
+    }
+
+    // make sure every parenthesis is closed
+    int paren_count = 0;
+    for (size_t i = 0; i < tokens->length; ++i){
+        if (tokens->tokens[i].type == TOKEN_LPAREN){
+            ++paren_count;
+        } else if (tokens->tokens[i].type == TOKEN_RPAREN){
+            --paren_count;
         }
     }
     return true;
@@ -108,7 +118,8 @@ Tokens lex(char *in){
             continue;
         }
 
-        if (current_state != last_state && buffer_index > 0){
+        if (current_state != last_state && buffer_index > 0 || 
+            current_state == TOKEN_LPAREN || current_state == TOKEN_RPAREN){
             tokens = realloc(
                 tokens,
                 sizeof(Token) * (out.length + 1)

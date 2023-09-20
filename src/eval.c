@@ -86,42 +86,48 @@ double tan_f(double input){
 }
 /* ================== END TRIG FUNCTIONS ================== */
 
-double lookup(TEXT_ENUM type, char** params){
+double lookup(TEXT_ENUM type, Node** params, size_t param_count){
     // get first parameter
     if (!params){
-        printf("ERROR: no parameters given\n");
+        fprintf(stderr, "\nERROR: No parameters provided to function.\n");
         return 0;
     }
-    double param = atof(params[0]);
-    switch (type){
+    double *evaluated_params = malloc(sizeof(double) * param_count);
+    for (int i = 0; i < param_count; i++){
+        evaluated_params[i] = evaluate_f(params[i]);
+    }
+    switch (type){ // technically needs to free params but whatever
         // functions
         case SIN:
-            return sin_f(param);
+            return sin_f(evaluated_params[0]);
         case COS: 
-            return cos_f(param);
+            return cos_f(evaluated_params[0]);
         case TAN:
-            return tan_f(param);
+            return tan_f(evaluated_params[0]);
         case LN:
-            return log_f(param);
+            return log_f(evaluated_params[0]);
         case EXP:
-            return exp_f(param);
+            return exp_f(evaluated_params[0]);
         case SQRT:
-            return pow_f(param, 0.5);
+            return pow_f(evaluated_params[0], 0.5);
         // constants
         default:
-            printf("ERROR: invalid name\n");
+            fprintf(stderr, "ERROR: Invalid name\n");
             return 0; 
     }
 }
 
 double evaluate_f(Node *tree){
     double left = 0, right = 0;
-    if (!tree->left && !tree->right){
+    if (tree && !tree->left && !tree->right){
         if (tree->t->type != TOKEN_TEXT)
             return atof(tree->t->contents);
-    } else {
+    } else if (tree && tree->left && tree->right){
         left = evaluate_f(tree->left);
         right = evaluate_f(tree->right);
+    } else if (!tree){
+        fprintf(stderr, "ERROR: Invalid syntax tree\n");
+        return 0;
     }
 
     switch (tree->t->type){
@@ -136,9 +142,11 @@ double evaluate_f(Node *tree){
         case TOKEN_POW:
             return pow_f(left, right);
         case TOKEN_TEXT:
-            return lookup(tree->t->func.text, tree->t->func.parameters);         
+            return lookup(tree->t->func.text,
+                          (Node**)tree->t->func.parameters,
+                          tree->t->func.param_count);
         default:
-            printf("ERROR: invalid token type\n");
+            fprintf(stderr, "ERROR: Invalid token type\n");
             return 0;
     }
 }
@@ -155,7 +163,7 @@ bool is_numeric(char *str){
 // TODO
 char *get_analytic_result(Node *n){
     if (n->t->type != TOKEN_TEXT){
-        return "YOU FUCKED UP"; // should never be ran
+        return "how did you even"; // should never be ran
     }
     switch (n->t->func.text){
         // check if exact multiple of pi
