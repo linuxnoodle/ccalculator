@@ -24,12 +24,14 @@ typedef struct {
 // max keyword name length is 15
 __attribute__((__used__))
 static char text_names[KEYWORD_COUNT][16] = {
-    "sin",
-    "cos",
-    "tan",
-    "ln",
-    "exp",
-    "sqrt",
+    "sin", // sine
+    "cos", // cosine 
+    "tan", // tangent
+    "ln", // natural log
+    "exp", // e^x
+    "sqrt", // square root
+    "var", // used to initialize a variable
+    "set_env", // used to set program variable
 };
 extern TEXT_ENUM hash_table[384];
 
