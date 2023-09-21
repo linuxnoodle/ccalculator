@@ -4,6 +4,7 @@
 #include "parser.h"
 #include "eval.h"
 #include "test.h"
+#include "vars.h"
 
 bool running = true;
 char* getln(char **history, size_t *history_size){
@@ -84,7 +85,8 @@ int main(int argc, char **argv){
             destroy_tokens(&t);
             continue;
         }*/ // skipping for now LOL
-
+        if (!is_valid)
+            continue;
         printf("\n%s = %g\n", input, evaluate_f(n));
         //printf("%s = %s\n", input, evaluate_exact(n));
         destroy_tree(n);

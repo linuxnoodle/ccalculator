@@ -4,7 +4,6 @@
 #include "common.h"
 #include "lexer.h"
 #include "hash.h"
-#include "stack.h"
 
 typedef struct Node Node;
 struct Node {

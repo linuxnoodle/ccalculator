@@ -1,4 +1,6 @@
 #include "eval.h"
+#include "parser.h"
+#include "vars.h"
 
 // technically libm is a seperate thing so i'll implement all math functions myself
 // TODO: move to CORE-MATH implementations (when i can understand them)
@@ -90,10 +92,19 @@ double lookup(TEXT_ENUM type, Node** params, size_t param_count){
     // get first parameter
     if (!params){
         fprintf(stderr, "\nERROR: No parameters provided to function.\n");
+        is_valid = false;
         return 0;
     }
     double *evaluated_params = malloc(sizeof(double) * param_count);
     for (int i = 0; i < param_count; i++){
+        // check if param is numeric 
+        bool is_numeric = true;
+        for (int j = 0; j < strlen(params[i]->t->contents); j++){
+            if (!isdigit(params[i]->t->contents[j])){
+                is_numeric = false;
+                break;
+            }
+        }
         evaluated_params[i] = evaluate_f(params[i]);
     }
     switch (type){ // technically needs to free params but whatever
@@ -110,14 +121,25 @@ double lookup(TEXT_ENUM type, Node** params, size_t param_count){
             return exp_f(evaluated_params[0]);
         case SQRT:
             return pow_f(evaluated_params[0], 0.5);
+        case VAR:
+            break;
+        case SET:
+            printf("Set environment variable '%s' to %s\n", params[0]->t->contents, params[1]->t->contents);
+            break;
         // constants
         default:
             fprintf(stderr, "ERROR: Invalid name\n");
+            is_valid = false;
             return 0; 
     }
+    return 0; // def won't cause any problems
 }
 
 double evaluate_f(Node *tree){
+    if (variables == NULL){
+        variables = malloc(sizeof(variable));
+    }
+
     double left = 0, right = 0;
     if (tree && !tree->left && !tree->right){
         if (tree->t->type != TOKEN_TEXT)
@@ -127,6 +149,7 @@ double evaluate_f(Node *tree){
         right = evaluate_f(tree->right);
     } else if (!tree){
         fprintf(stderr, "ERROR: Invalid syntax tree\n");
+        is_valid = false;
         return 0;
     }
 
@@ -147,6 +170,7 @@ double evaluate_f(Node *tree){
                           tree->t->func.param_count);
         default:
             fprintf(stderr, "ERROR: Invalid token type\n");
+            is_valid = false;
             return 0;
     }
 }
@@ -162,9 +186,6 @@ bool is_numeric(char *str){
 
 // TODO
 char *get_analytic_result(Node *n){
-    if (n->t->type != TOKEN_TEXT){
-        return "how did you even"; // should never be ran
-    }
     switch (n->t->func.text){
         // check if exact multiple of pi
         case SIN:

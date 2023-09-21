@@ -1,7 +1,9 @@
 #include "parser.h"
 #include "hash.h"
 #include "lexer.h"
-#include "stack.h"
+#include "vars.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 // Break up an array of tokens into a parse tree
 // Binary operators have a left and right child
@@ -69,8 +71,10 @@ int *get_precedences(Tokens tokens){
                 break;
         }
     }
-    if (parentheses != 0)
+    if (parentheses != 0){
         fprintf(stderr, "Error: mismatched parentheses\n");
+        is_valid = false;
+    }
     return precedences;
 }
 
@@ -130,45 +134,55 @@ Node *recurse_collect(Tokens tokens, int *precedence, size_t start, size_t end){
                 // find matching parenthesis
                 int parentheses = 1;
                 size_t i = start + 2;
-                while (parentheses != 0){
+                while (parentheses > 0 && i < end){
                     if (tokens.tokens[i].type == TOKEN_LPAREN)
                         ++parentheses;
                     else if (tokens.tokens[i].type == TOKEN_RPAREN)
                         --parentheses;
                     ++i;
                 }
+
+                if (parentheses != 0){
+                    fprintf(stderr, "Error: mismatched parentheses\n");
+                    is_valid = false;
+                    return NULL;
+                }
+                
                 // collect each token into groups, delimit by commas
                 // recurse_collect on each group
-                char **groupings = malloc(sizeof(char*) * (i - start - 3));
+                size_t *group_starts = malloc(sizeof(size_t) * (i - start));
+                size_t *group_end = malloc(sizeof(size_t) * (i - start));
                 size_t groupings_index = 0;
-                size_t group_start = start + 2;
+                char str[1000];
                 for (size_t j = start + 2; j < i - 1; ++j){
                     if (tokens.tokens[j].type == TOKEN_COMMA){
-                        groupings[groupings_index] = malloc(sizeof(char) * (j - group_start + 1));
-                        strncpy(groupings[groupings_index], tokens.tokens[j].contents, j - group_start);
-                        groupings[groupings_index][j - group_start] = '\0';
+                        group_starts[groupings_index] = start + 2;
+                        group_end[groupings_index] = j;
                         ++groupings_index;
-                        group_start = j + 1;
+                        start = j + 1;
                     }
                 }
-
-                // and malloc a Node** to store all subtrees for each parameter
-                /*node->t->func.parameters = malloc(sizeof(Node*) * (i - start - 3));
-                node->t->func.param_count = i - start - 3;
-                for (size_t j = start + 2; j < i - 1; ++j){
-                    //node->t->func.parameters[j - start - 2] = tokens.tokens[j].contents;
-                    node->t->func.parameters[j - start - 2] = recurse_collect(tokens, precedence, j, j + 1);
-                    printf("\nSTART SUBTREE:\n");
-                    print_tree(node->t->func.parameters[j - start - 2], 0);
-                }*/
 
                 // for every grouping, recurse_collect and store in node->t->func.parameters
                 node->t->func.param_count = groupings_index + 1;
                 node->t->func.parameters = malloc(sizeof(Node*) * (groupings_index + 1));
                 for (size_t j = 0; j < groupings_index + 1; ++j){
-                    node->t->func.parameters[j] = recurse_collect(tokens, precedence, group_start, i - 1);
-                    group_start = i;
+                    node->t->func.parameters[j] = recurse_collect(tokens, precedence, group_starts[j], group_end[j]);
+                    // print string for each parameter
                 }
+            } else if (name != 0){
+                // get hash for variable 
+                size_t var_hash = variable_hash(tokens.tokens[start].contents);
+                // check if variable exists, making sure hash is not out of bounds
+                /*if (var_hash < variable_count && 
+                    variables variable_hash_table[var_hash] != ){
+                    variable v = variables[variable_hash_table[var_hash]];
+                    if (v.defined){
+                        node->t->contents = v.value;
+                    } else {
+                        
+                    }
+                }*/
             }
         }
         return node;
@@ -180,9 +194,6 @@ Node *recurse_collect(Tokens tokens, int *precedence, size_t start, size_t end){
 }
 
 Node *parse(Tokens tokens) {
-    // iteratively create parse tree using stack
-    // preserve order of operations
-    stack *s = stack_new(sizeof(Node *));
     int *precedences = get_precedences(tokens);
     return recurse_collect(tokens, precedences, 0, tokens.length);
 }

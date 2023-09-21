@@ -3,7 +3,6 @@
 
 #include "common.h"
 #include "hash.h" // for functions
-#include <stdbool.h>
 
 typedef enum {
     TOKEN_FALLBACK = 0,
