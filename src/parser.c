@@ -148,18 +148,14 @@ Node *recurse_collect(Tokens tokens, int *precedence, size_t start, size_t end){
                     return NULL;
                 }
                 
-                // collect each token into groups, delimit by commas
-                // recurse_collect on each group
-                size_t *group_starts = malloc(sizeof(size_t) * (i - start));
-                size_t *group_end = malloc(sizeof(size_t) * (i - start));
                 size_t groupings_index = 0;
-                char str[1000];
+                size_t *group_start = malloc(sizeof(size_t) * (i - start));
+                group_start[0] = start + 2;
                 for (size_t j = start + 2; j < i - 1; ++j){
                     if (tokens.tokens[j].type == TOKEN_COMMA){
-                        group_starts[groupings_index] = start + 2;
-                        group_end[groupings_index] = j;
                         ++groupings_index;
-                        start = j + 1;
+                        group_start[groupings_index] = j + 1;
+                        group_start = realloc(group_start, sizeof(size_t) * (groupings_index + 1));
                     }
                 }
 
@@ -167,8 +163,8 @@ Node *recurse_collect(Tokens tokens, int *precedence, size_t start, size_t end){
                 node->t->func.param_count = groupings_index + 1;
                 node->t->func.parameters = malloc(sizeof(Node*) * (groupings_index + 1));
                 for (size_t j = 0; j < groupings_index + 1; ++j){
-                    node->t->func.parameters[j] = recurse_collect(tokens, precedence, group_starts[j], group_end[j]);
-                    // print string for each parameter
+                    //node->t->func.parameters[j] = recurse_collect(tokens, precedence, group_starts[j], group_end[j]);
+                    node->t->func.parameters[j] = recurse_collect(tokens, precedence, group_start[j], i - 1);
                 }
             } else if (name != 0){
                 // get hash for variable 

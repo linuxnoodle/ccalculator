@@ -64,6 +64,7 @@ int main(int argc, char **argv){
     Node *n;
 
     initialize_table();
+    initialize_vars();
     while (running){
         printf("> ");
         fflush(stdout);
@@ -94,6 +95,9 @@ int main(int argc, char **argv){
 
         history = realloc(history, sizeof(char *) * (++history_size));
         history[history_size - 1] = input;
+
+        printf("%d\n", radians);
+        fflush(stdout);
     }
 
     for (size_t i = 0; i < history_size; i++)

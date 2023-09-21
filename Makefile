@@ -1,7 +1,7 @@
 PROJECT:=calculator
 
-CC:=gcc
-LDFLAGS=-Wall -Wextra -Wpedantic -Werror -O2 -ggdb
+CC:=clang
+LDFLAGS=-Wall -Wextra -Wpedantic -Werror -O2 -ggdb -g3 -fsanitize=address,undefined
 #LDFLAGS=-Wall -Wextra -Wpedantic -Og -g3 -ggdb -fsanitize=address,undefined
 CXXFLAGS=-std=c99 -Iinclude
 UNAME:=$(shell uname)
