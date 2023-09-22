@@ -98,63 +98,34 @@ double lookup(TEXT_ENUM type, Node** params, size_t param_count){
         return 0;
     }
     double *evaluated_params = malloc(sizeof(double) * param_count);
-    bool* is_numeric = malloc(sizeof(bool) * param_count);
-    memset(is_numeric, true, param_count);
     for (int i = 0; i < param_count; i++){
-        // check if string is nonnumeric before evaluating
-        for (int j = 0; j < strlen(params[i]->t->contents); j++){
-            if (!isdigit(params[i]->t->contents[j])){
-                is_numeric[i] = false;
-                break;
-            }
-        }
-        if (!is_numeric[i])
-            continue;
         evaluated_params[i] = evaluate_f(params[i]);
     }
 
+    printf("num: %f\n", evaluated_params[0]);
+    #define RADIAN_TO_DEGREE 57.29577951308232087679815481410517033
     switch (type){ // technically needs to free params but whatever
         // functions
         case SIN:
-            if (!is_numeric[0]){
-                printf("ERROR: sin() requires a numeric parameter.\n");
-            }
-            return sin_f(evaluated_params[0]);
+            return sin_f(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
         case COS: 
-            if (!is_numeric[0]){
-                printf("ERROR: cos() requires a numeric parameter.\n");
-            }
-            return cos_f(evaluated_params[0]);
+            return cos_f(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
         case TAN:
-            if (!is_numeric[0]){
-                printf("ERROR: tan() requires a numeric parameter.\n");
-            }
-            return tan_f(evaluated_params[0]);
+            return tan_f(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
         case LN:
-            if (!is_numeric[0]){
-                printf("ERROR: ln() requires a numeric parameter.\n");
-            }
             return log_f(evaluated_params[0]);
         case EXP:
-            if (!is_numeric[0]){
-                printf("ERROR: exp() requires a numeric parameter.\n");
-            }
             return exp_f(evaluated_params[0]);
         case SQRT:
-            if (!is_numeric[0]){
-                printf("ERROR: sqrt() requires a numeric parameter.\n");
-            }
             return pow_f(evaluated_params[0], 0.5);
         case VAR:
             printf("TODO: implement variable lookup\n");
             break;
         case SET:
-            if (is_numeric[0]){
-                printf("ERROR: set() requires a variable name.\n");
-                return 0;
-            }
             if (!set_var(params[0]->t->contents, params[1]->t->contents))
                 printf("Set environment variable '%s' to %s\n", params[0]->t->contents, params[1]->t->contents);
+            else 
+                printf("ERROR: Invalid variable name\n");
             break;
         // constants
         default:
@@ -174,6 +145,9 @@ double evaluate_f(Node *tree){
     if (tree && !tree->left && !tree->right){
         if (tree->t->type != TOKEN_TEXT)
             return atof(tree->t->contents);
+        else {
+            printf("%lu\n", tree->t->type);
+        }
     } else if (tree && tree->left && tree->right){
         left = evaluate_f(tree->left);
         right = evaluate_f(tree->right);
@@ -205,16 +179,6 @@ double evaluate_f(Node *tree){
     }
 }
 
-bool is_numeric(char *str){
-    for (int i = 0; i < strlen(str); i++){
-        if (!isdigit(str[i]) && str[i] != '.'){
-            return false;
-        }
-    }
-    return true;
-}
-
-// TODO
 char *get_analytic_result(Node *n){
     switch (n->t->func.text){
         // check if exact multiple of pi

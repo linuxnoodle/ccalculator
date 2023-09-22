@@ -16,7 +16,6 @@ int set_var(char* var, char* val){
         if (strcmp(calc_variables[i], var) == 0){
             switch (i){
                 case 0:
-                    printf("I'M ACTUALLY AOBUT TO KILL SOMEONE %d", atoi(val));
                     radians = atoi(val);
                     break;
                 case 1:

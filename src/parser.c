@@ -40,6 +40,7 @@
 
 int *get_precedences(Tokens tokens){
     int *precedences = malloc(sizeof(int) * tokens.length);
+    memset(precedences, -1, sizeof(int) * tokens.length);
     int parentheses = 0;
     for (int i = 0; i < tokens.length; ++i){
         switch (tokens.tokens[i].type){
@@ -189,31 +190,10 @@ Node *recurse_collect(Tokens tokens, int *precedence, size_t start, size_t end){
     }
 }
 
+// generic wrapper function for recurse_collect
 Node *parse(Tokens tokens) {
     int *precedences = get_precedences(tokens);
     return recurse_collect(tokens, precedences, 0, tokens.length);
-}
-
-void print_tree(Node *root, int space){
-    if (root == NULL)
-        return;
-    space += 4;
-    print_tree(root->right, space);
-    printf("\n");
-    for (int i = 4; i < space; i++)
-        printf(" ");
-    if (root->t->type == TOKEN_TEXT) {
-        // print parameters as well
-        printf("PARAMETERS: ");
-        for (size_t i = 0; i < root->t->func.param_count; ++i){
-            printf("%s", ((Node*)root->t->func.parameters[i])->t->contents);
-            if (i != root->t->func.param_count - 1)
-                printf(", ");
-        }
-        printf("\n\n");
-    }
-    printf("%s\n", root->t->contents);
-    print_tree(root->left, space);
 }
 
 void destroy_tree(Node *root){

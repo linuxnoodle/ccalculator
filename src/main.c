@@ -66,7 +66,7 @@ int main(int argc, char **argv){
     initialize_table();
     initialize_vars();
     while (running){
-        printf("> ");
+        printf("$> ");
         fflush(stdout);
 
         input = getln(history, &history_size);
@@ -88,16 +88,13 @@ int main(int argc, char **argv){
         }*/ // skipping for now LOL
         if (!is_valid)
             continue;
-        printf("\n%s = %g\n", input, evaluate_f(n));
+        printf("%s = %g\n", input, evaluate_f(n));
         //printf("%s = %s\n", input, evaluate_exact(n));
         destroy_tree(n);
         destroy_tokens(&t);
 
         history = realloc(history, sizeof(char *) * (++history_size));
         history[history_size - 1] = input;
-
-        printf("%d\n", radians);
-        fflush(stdout);
     }
 
     for (size_t i = 0; i < history_size; i++)
