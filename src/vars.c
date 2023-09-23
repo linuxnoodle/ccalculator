@@ -1,4 +1,5 @@
 #include "vars.h"
+#include <stdio.h>
 
 bool is_valid;
 
@@ -27,5 +28,6 @@ int set_var(char* var, char* val){
     }
 
     fprintf(stderr, "Unknown variable: %s\n", var);
+    fflush(stderr);
     return 1;
 }

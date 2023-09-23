@@ -43,6 +43,7 @@ bool check_token_validity(Tokens *tokens){
         if (tokens->tokens[i].type == TOKEN_NUMBER
         && tokens->tokens[i + 1].type == TOKEN_NUMBER){
             fprintf(stderr, "Error: You probably forgot to add an operator(s) or comma(s).\n");
+            fflush(stderr);
             return false;
         }
     }

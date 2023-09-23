@@ -74,8 +74,8 @@ int main(int argc, char **argv){
             printf("\n");
             continue;
         }
+        is_valid = true;
         t = lex(input);
-        printf("\n");
         /*for (size_t i = 0; i < t.length; i++)
             printf("%s: ID%d\n", t.tokens[i].contents, t.tokens[i].type);*/
         n = parse(t);
@@ -86,9 +86,11 @@ int main(int argc, char **argv){
             destroy_tokens(&t);
             continue;
         }*/ // skipping for now LOL
-        if (!is_valid)
+        if (!is_valid){
+            printf("how");
             continue;
-        printf("%s = %g\n", input, evaluate_f(n));
+        }
+        printf("\n%s = %g\n", input, evaluate_f(n));
         //printf("%s = %s\n", input, evaluate_exact(n));
         destroy_tree(n);
         destroy_tokens(&t);

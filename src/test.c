@@ -16,6 +16,7 @@ char *read_file(const char *path) {
     FILE *f = fopen(path, "rb");
     if (!f){
         fprintf(stderr, "Error: Could not open file %s\n", path);
+        fflush(stderr);
         exit(EXIT_FAILURE);
     }
     
@@ -26,12 +27,14 @@ char *read_file(const char *path) {
     buffer = malloc(length);
     if (!buffer) {
         fprintf(stderr, "Error: Could not allocate memory for file %s\n", path);
+        fflush(stderr);
         exit(EXIT_FAILURE);
     }
     
     int k = fread(buffer, 1, length, f);
     if (k != length) {
         fprintf(stderr, "Error: Could not read file %s\n", path);
+        fflush(stderr);
         exit(EXIT_FAILURE);
     }
     fclose(f);
@@ -43,6 +46,7 @@ void run_tests(){
     const char *fileName = "tests.csv";
     if (!file_exists(fileName)) {
         fprintf(stderr, "Error: Could not find file %s\n", fileName);
+        fflush(stderr);
         exit(EXIT_FAILURE);
     }
 

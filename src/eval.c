@@ -93,7 +93,8 @@ double tan_f(double input){
 double lookup(TEXT_ENUM type, Node** params, size_t param_count){
     // get first parameter
     if (!params){
-        fprintf(stderr, "\nERROR: No parameters provided to function.\n");
+        fprintf(stderr, "\nERROR: No parameters provided to function.");
+        fflush(stderr);
         is_valid = false;
         return 0;
     }
@@ -102,7 +103,6 @@ double lookup(TEXT_ENUM type, Node** params, size_t param_count){
         evaluated_params[i] = evaluate_f(params[i]);
     }
 
-    printf("num: %f\n", evaluated_params[0]);
     #define RADIAN_TO_DEGREE 57.29577951308232087679815481410517033
     switch (type){ // technically needs to free params but whatever
         // functions
@@ -124,12 +124,15 @@ double lookup(TEXT_ENUM type, Node** params, size_t param_count){
         case SET:
             if (!set_var(params[0]->t->contents, params[1]->t->contents))
                 printf("Set environment variable '%s' to %s\n", params[0]->t->contents, params[1]->t->contents);
-            else 
+            else {
                 printf("ERROR: Invalid variable name\n");
+                is_valid = false;
+            }
             break;
         // constants
         default:
             fprintf(stderr, "ERROR: Invalid name\n");
+            fflush(stderr);
             is_valid = false;
             return 0; 
     }
@@ -145,14 +148,12 @@ double evaluate_f(Node *tree){
     if (tree && !tree->left && !tree->right){
         if (tree->t->type != TOKEN_TEXT)
             return atof(tree->t->contents);
-        else {
-            printf("%lu\n", tree->t->type);
-        }
     } else if (tree && tree->left && tree->right){
         left = evaluate_f(tree->left);
         right = evaluate_f(tree->right);
     } else if (!tree){
         fprintf(stderr, "ERROR: Invalid syntax tree\n");
+        fflush(stderr);
         is_valid = false;
         return 0;
     }
@@ -174,6 +175,7 @@ double evaluate_f(Node *tree){
                           tree->t->func.param_count);
         default:
             fprintf(stderr, "ERROR: Invalid token type\n");
+            fflush(stderr);
             is_valid = false;
             return 0;
     }

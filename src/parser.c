@@ -74,6 +74,7 @@ int *get_precedences(Tokens tokens){
     }
     if (parentheses != 0){
         fprintf(stderr, "Error: mismatched parentheses\n");
+        fflush(stderr);
         is_valid = false;
     }
     return precedences;
@@ -145,6 +146,7 @@ Node *recurse_collect(Tokens tokens, int *precedence, size_t start, size_t end){
 
                 if (parentheses != 0){
                     fprintf(stderr, "Error: mismatched parentheses\n");
+                    fflush(stderr);
                     is_valid = false;
                     return NULL;
                 }
