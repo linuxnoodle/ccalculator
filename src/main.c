@@ -90,15 +90,28 @@ int main(int argc, char **argv){
         }
         
         is_valid = true;
-        t = lex(input);
-        n = parse(t);
         if (approximate){
+            t = lex(input);
+            n = parse(t);
             double d = evaluate_f(n);
             size_t len = snprintf(NULL, 0, "%f", d);
             r = malloc(sizeof(char) * (len + 1));
             sprintf(r, "%f", d);
-        } else
-            r = evaluate_exact(n);
+        } else {
+            char *last = malloc(sizeof(char) * (strlen(input) + 1));
+            char *curr = input;
+            while (strcmp(last, curr) != 0){
+                free(last);
+                last = curr;
+                t = lex(curr);
+                n = parse(t);
+                curr = evaluate_exact(n);
+                
+                destroy_tree(n);
+                destroy_tokens(&t);
+            }
+            r = curr;
+        }
 
         if (is_valid){
             printf("%s = %s\n", input, r);
