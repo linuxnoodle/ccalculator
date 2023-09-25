@@ -1,99 +1,37 @@
 #include "eval.h"
 #include "parser.h"
 #include "vars.h"
-#include <stdio.h>
-#include <string.h>
 
-// technically libm is a seperate thing so i'll implement all math functions myself
-// TODO: move to CORE-MATH implementations (when i can understand them)
-// https://core-math.gitlabpages.inria.fr/
+/* ================== BEGIN STATS FUNCTIONS ================== */
 
-/* ================== BEGIN HELPER FUNCTIONS ================== */
-double floor(double input){
-    int i = (int)input;
-    if (i > input)
-        return i - 1;
-    return i;
-}
-
-double mod_f(double a, double b){
-    // a % b = a - b * floor(a / b)
-    return a - b * floor(a / b);
-}
-/* ================== END HELPER FUNCTIONS ================== */
-
-/* ================== BEGIN POWER FUNCTIONS ================== */
-double exp_f(double exponent){
-    // compute e^x as a taylor series
-    double sum = 1;
-    double term = 1;
-    for (int i = 1; i < exponent + 100; i++){
-        term *= exponent / i;
-        sum += term;
+double factorial(int input){
+    double d = 1;
+    for (int i = 1; i <= input; i++){
+        d *= i;
     }
-    return sum;
+    return d;
 }
 
-double log_f(double input){
-    // taylor series for log(1 + x) 
-    double a = 1;
-    double y = (input - a) / (input + a);
-    double sum = 2 * y;
-    double term = 2 * y;
-    // convergence is rather slow, 
-    // so terms are in relation to the input size
-    // TODO: find more efficient alg
-    for (int i = 3; i < input * 2 + 100; i += 2){
-        term *= y * y;
-        sum += term / i;
-    }
-    return sum;
-}
-double pow_f(double base, double exponent){
-    // use the identity a^b = e^(b * ln(a))
-    return exp_f(exponent * log_f(base));
-}
-/* ================== END POWER FUNCTIONS ================== */
-
-/* ================== BEGIN TRIG FUNCTIONS ================== */
-// minimax approximations from https://publik-void.github.io/sin-cos-approximations/
-double sin_f(double input){
-    double x1 = mod_f(input, 2 * PI);
-    double x2 = x1 * x1;
-    return x1 * (0.99999999999999903148008418378595416 +
-           x2 * (-0.166666666666647809166043102595249597 +
-           x2 * (0.00833333333322623603809875967403959193 +
-           x2 * (-0.000198412698139567192404904096148800949 +
-           x2 * (2.75573155289183671003278704218629314e-6 +
-           x2 * (-2.50518246481347370240543449781033653e-8 +
-           x2 * (1.60466203872904879366205078294157963e-10 -
-           7.35766011971809330900478644486164214e-13 * x2)))))));
+double ncr(double n, double r){
+    return factorial(n) / (factorial(r) * factorial(n - r));
 }
 
-// seperate minimax function for more precision
-double cos_f(double input){
-    double x1 = mod_f(input, 2 * PI); // domain of approximation is [-pi, pi]
-    double x2 = x1 * x1;
-    return 0.99999999999999999608981951072301546 +
-           x2 * (-0.49999999999999974308667070690271678 +
-           x2 * (0.041666666666663887964497659102665977 +
-           x2 * (-0.00138888888887731722447063574018337351 +
-           x2 * (0.0000248015872774439536215582612189964674 +
-           x2 * (-2.75573163935355075808996593111486352e-7 +
-           x2 * (2.08765619601383980877940138085106396e-9 +
-           x2 * (-1.14629048996344469555493302470243688e-11 +
-           4.60900737685258733987906059894416831e-14 * x2)))))));
+double npr(double n, double r){
+    return factorial(n) / factorial(n - r);
 }
 
-double tan_f(double input){
-    return sin_f(input) / cos_f(input);
-}
-/* ================== END TRIG FUNCTIONS ================== */
+/* ================== END STATS FUNCTIONS ================== */
 
 double lookup(TEXT_ENUM type, Node** params, size_t param_count){
     // get first parameter
+    if (type == FALLBACK){
+        // not gonna do anything here, variables are handled in the parser
+        return 0;
+    }
+
     if (!params){
-        fprintf(stderr, "\nERROR: No parameters provided to function.");
+        printf("type: %d\n", type);
+        fprintf(stderr, "\nError: No parameters provided to function.\n");
         fflush(stderr);
         is_valid = false;
         return 0;
@@ -103,35 +41,251 @@ double lookup(TEXT_ENUM type, Node** params, size_t param_count){
         evaluated_params[i] = evaluate_f(params[i]);
     }
 
-    #define RADIAN_TO_DEGREE 57.29577951308232087679815481410517033
+    #define RADIAN_TO_DEGREE PI / 180.0
     switch (type){ // technically needs to free params but whatever
         // functions
         case SIN:
-            return sin_f(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
-        case COS: 
-            return cos_f(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
-        case TAN:
-            return tan_f(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
-        case LN:
-            return log_f(evaluated_params[0]);
-        case EXP:
-            return exp_f(evaluated_params[0]);
-        case SQRT:
-            return pow_f(evaluated_params[0], 0.5);
-        case VAR:
-            printf("TODO: implement variable lookup\n");
-            break;
-        case SET:
-            if (!set_var(params[0]->t->contents, params[1]->t->contents))
-                printf("Set environment variable '%s' to %s\n", params[0]->t->contents, params[1]->t->contents);
-            else {
-                printf("ERROR: Invalid variable name\n");
+            if (param_count != 1){
+                fprintf(stderr, "\nError: SIN requires one parameter.\n");
+                fflush(stderr);
                 is_valid = false;
+                return 0;
             }
+            
+            return sin(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case COS: 
+            if (param_count != 1){
+                fprintf(stderr, "\nError: COS requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+                
+            return cos(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case TAN:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: TAN requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+
+            return tan(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case LN:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: LN requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+
+            if (evaluated_params[0] <= 0){
+                fprintf(stderr, "\nError: Cannot take log of non-positive number.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            
+            return log(evaluated_params[0]);
+        case EXP:
+            return exp(evaluated_params[0]);
+        case SQRT:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: SQRT requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+
+            if (evaluated_params[0] < 0){
+                fprintf(stderr, "\nError: Cannot take square root of negative number.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            
+            return pow(evaluated_params[0], 0.5);
+        case FACTORIAL:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: FACTORIAL requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+
+            if (evaluated_params[0] < 0){
+                fprintf(stderr, "\nError: Cannot take factorial of negative number.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            } 
+            
+            return factorial((int)evaluated_params[0]);
+        case NPR:
+            if (param_count != 2){
+                fprintf(stderr, "\nError: NPR requires two parameters.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            if (evaluated_params[0] < 0 || evaluated_params[1] < 0){
+                fprintf(stderr, "\nError: Cannot take NPR of negative number.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            } 
+            
+            return npr(evaluated_params[0], evaluated_params[1]);
+        case NCR:
+            if (param_count != 2){
+                fprintf(stderr, "\nError: NCR requires two parameters.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+
+            if (evaluated_params[0] < 0 || evaluated_params[1] < 0){
+                fprintf(stderr, "\nError: Cannot take NCR of negative number.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            } 
+            
+            return ncr(evaluated_params[0], evaluated_params[1]);
+        case SEC: 
+            if (param_count != 1){
+                fprintf(stderr, "\nError: SEC requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return 1 / cos(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case CSC:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: CSC requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return 1 / sin(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case COT:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: COT requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return 1 / tan(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case ASIN:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ASIN requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return asin(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case ACOS:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ACOS requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return acos(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case ATAN:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ATAN requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return atan(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case SINH:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: SINH requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return sinh(evaluated_params[0]);
+        case COSH:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: COSH requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return cosh(evaluated_params[0]);
+        case TANH:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: TANH requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return tanh(evaluated_params[0]);
+        case ASINH:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ASINH requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return asinh(evaluated_params[0]);
+        case ACOSH:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ACOSH requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return acosh(evaluated_params[0]);
+        case ATANH:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ATANH requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return atanh(evaluated_params[0]);
+        case ASEC:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ASEC requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return acos(1 / evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case ACSC:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ACSC requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return asin(1 / evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case ACOT:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ACOT requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return atan(1 / evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case SET:
+            if (param_count != 2){
+                fprintf(stderr, "\nError: SET requires two parameters.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            if (!set_var(params[0]->t->contents, params[1]->t->contents))
+                printf("\nSet environment variable '%s' to %s\n", params[0]->t->contents, params[1]->t->contents);
+            is_valid = false;
             break;
         // constants
         default:
-            fprintf(stderr, "ERROR: Invalid name\n");
+            fprintf(stderr, "Error: Invalid name\n");
             fflush(stderr);
             is_valid = false;
             return 0; 
@@ -152,7 +306,7 @@ double evaluate_f(Node *tree){
         left = evaluate_f(tree->left);
         right = evaluate_f(tree->right);
     } else if (!tree){
-        fprintf(stderr, "ERROR: Invalid syntax tree\n");
+        fprintf(stderr, "Error: Invalid syntax tree\n");
         fflush(stderr);
         is_valid = false;
         return 0;
@@ -168,50 +322,281 @@ double evaluate_f(Node *tree){
         case TOKEN_DIVIDE:
             return left / right;
         case TOKEN_POW:
-            return pow_f(left, right);
+            return pow(left, right);
         case TOKEN_TEXT:
             return lookup(tree->t->func.text,
                           (Node**)tree->t->func.parameters,
                           tree->t->func.param_count);
+        case TOKEN_EQUALS:
+            // make sure left side is only a string
+            if (tree->left->t->type != TOKEN_TEXT){
+                fprintf(stderr, "Error: Invalid syntax tree\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            // also make sure there's nothing but text, so left should have no children
+            } else if (tree->left->left || tree->left->right){
+                fprintf(stderr, "Error: Invalid syntax tree\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+
+            int len = snprintf(NULL, 0, "%f", right);
+            char *s = malloc(len + 1);
+            snprintf(s, len + 1, "%f", right);
+            // check if variable already exists
+            if (check_if_variable(tree->left->t->contents)){
+                reassign_variable(tree->left->t->contents, s);
+                is_valid = false;
+                printf("%s = %s\n", tree->left->t->contents, s);
+            } else {
+                // otherwise make a new variable
+                variable *v = malloc(sizeof(variable));
+                char* name = malloc(strlen(tree->left->t->contents) + 1);
+                strcpy(name, tree->left->t->contents);
+                
+                v->name = name; // preventing freeing when tree is freed
+                v->value = s;
+                add_variable(v);
+                is_valid = false;
+                printf("%s = %s\n", tree->left->t->contents, s);
+            }
+            return 0;
         default:
-            fprintf(stderr, "ERROR: Invalid token type\n");
+            fprintf(stderr, "Error: Invalid token type\n");
             fflush(stderr);
             is_valid = false;
             return 0;
     }
 }
 
-char *get_analytic_result(Node *n){
-    switch (n->t->func.text){
-        // check if exact multiple of pi
-        case SIN:
-        case COS:
-        case TAN:
-            break;
-        case SQRT:
-            break;
-        default:
-            break;
+char *evaluate_exact(Node* tree){
+    if (variables == NULL){
+        variables = malloc(sizeof(variable));
     }
-}
 
-char *evaluate_exact(Node *tree){
-    if (!tree->left && !tree->right){
-        return tree->t->contents;
+    char *left = NULL, *right = NULL;
+    if (tree && !tree->left && !tree->right){
+        if (tree->t->type != TOKEN_TEXT)
+            return tree->t->contents;
+    } else if (tree && tree->left && tree->right){
+        left = evaluate_exact(tree->left);
+        right = evaluate_exact(tree->right);
+    } else if (!tree){
+        fprintf(stderr, "Error: Invalid syntax tree\n");
+        fflush(stderr);
+        is_valid = false;
+        return NULL;
     }
-    // if the operation isn't a function, evaluate 
-    if (tree->t->type != TOKEN_TEXT){
-        char *left = evaluate_exact(tree->left);
-        char *right = evaluate_exact(tree->right);
-        char *str = malloc(sizeof(char) * 100);
-        sprintf(str, "(%s %s %s)", left, tree->t->contents, right);
-        return str;
-    } else {
-        return get_analytic_result(tree);
+
+    switch (tree->t->type){
+        case TOKEN_PLUS:
+            // make sure there's both a left and right
+            if (!left || !right){
+                fprintf(stderr, "Error: Invalid syntax tree. Make sure you provide a left and right argument to +.\n");
+                fflush(stderr);
+                is_valid = false;
+                return NULL;
+            }
+            // if both are numeric, add them
+            // if one is a variable then just concatenate
+            if (tree->left->t->type == TOKEN_NUMBER && tree->right->t->type == TOKEN_NUMBER){
+                char *s = malloc(strlen(left) + strlen(right) + 3); // number can't be larger than the sum of both of them plus 1
+                double sum = atof(left) + atof(right);
+                snprintf(s, strlen(left) + strlen(right) + 3, "%g", sum);
+                return s;
+            // both are TOKEN_TEXT and both aren't functions (check in hash table)
+            } else if (tree->left->t->type == TOKEN_TEXT && tree->right->t->type == TOKEN_TEXT){
+                TEXT_ENUM text_left = hash_table[hash(tree->left->t->contents)],
+                          text_right = hash_table[hash(tree->right->t->contents)];
+                // checking if either are non-functions
+                if ((text_left == 0 || text_right == 0) || (strcmp(tree->left->t->contents, get_key(text_left)) || (strcmp(tree->right->t->contents, get_key(text_right))))){
+                    // check if both are the same string, if so add coefficients
+                    if (!strcmp(tree->left->t->contents, tree->right->t->contents)){
+                        char *s = malloc(strlen(left) + strlen(right) + 3);
+                        snprintf(s, strlen(left) + strlen(right) + 3, "2 * %s", left);
+                        return s;
+                    } else {
+                        char *s = malloc(strlen(left) + strlen(right) + 3);
+                        snprintf(s, strlen(left) + strlen(right) + 3, "%s + %s", left, right);
+                        return s;
+                    }
+                } else {
+                    char *s = malloc(strlen(left) + strlen(right) + 3);
+                    snprintf(s, strlen(left) + strlen(right) + 3, "%s + %s", left, right);
+                    return s;
+                }
+            // literally just concatenate both 
+            } else {
+                char *s = malloc(strlen(left) + strlen(right) + 1);
+                strcat(s, left);
+                strcat(s, " + ");
+                strcat(s, right);
+                return s;
+            }
+        case TOKEN_MINUS:
+            if (!left || !right){
+                fprintf(stderr, "Error: Invalid syntax tree. Make sure you provide a left and right argument to +.\n");
+                fflush(stderr);
+                is_valid = false;
+                return NULL;
+            }
+            if (tree->left->t->type == TOKEN_NUMBER && tree->right->t->type == TOKEN_NUMBER){
+                char *s = malloc(strlen(left) + strlen(right) + 3); 
+                double diff = atof(left) - atof(right);
+                snprintf(s, strlen(left) + strlen(right) + 3, "%g", diff);
+                return s;
+            } else if (tree->left->t->type == TOKEN_TEXT && tree->right->t->type == TOKEN_TEXT){
+                TEXT_ENUM text_left = hash_table[hash(tree->left->t->contents)],
+                          text_right = hash_table[hash(tree->right->t->contents)];
+                if ((text_left == 0 || text_right == 0) || (strcmp(tree->left->t->contents, get_key(text_left)) || (strcmp(tree->right->t->contents, get_key(text_right))))){
+                    if (!strcmp(tree->left->t->contents, tree->right->t->contents)){
+                        char *s = malloc(2);
+                        snprintf(s, 2, "0");
+                        return s;
+                    } else {
+                        char *s = malloc(strlen(left) + strlen(right) + 3);
+                        snprintf(s, strlen(left) + strlen(right) + 3, "%s - %s", left, right);
+                        return s;
+                    }
+                } else {
+                    char *s = malloc(strlen(left) + strlen(right) + 3);
+                    snprintf(s, strlen(left) + strlen(right) + 3, "%s - %s", left, right);
+                    return s;
+                }
+            } else {
+                char *s = malloc(strlen(left) + strlen(right) + 3);
+                strcat(s, left);
+                strcat(s, " - ");
+                strcat(s, right);
+                return s;
+            }
+        case TOKEN_MULTIPLY:
+            if (!left || !right){
+                fprintf(stderr, "Error: Invalid syntax tree. Make sure you provide a left and right argument to +.\n");
+                fflush(stderr);
+                is_valid = false;
+                return NULL;
+            }
+            if (tree->left->t->type == TOKEN_NUMBER && tree->right->t->type == TOKEN_NUMBER){
+                char *s = malloc(strlen(left) + strlen(right) + 1); 
+                double times = atof(left) * atof(right);
+                snprintf(s, strlen(left) + strlen(right) + 1, "%g", times);
+                return s;
+            } else if (tree->left->t->type == TOKEN_TEXT && tree->right->t->type == TOKEN_TEXT){
+                TEXT_ENUM text_left = hash_table[hash(tree->left->t->contents)],
+                          text_right = hash_table[hash(tree->right->t->contents)];
+                if ((text_left == 0 || text_right == 0) || (strcmp(tree->left->t->contents, get_key(text_left)) || (strcmp(tree->right->t->contents, get_key(text_right))))){
+                    if (!strcmp(tree->left->t->contents, tree->right->t->contents)){
+                        char *s = malloc(strlen(left) + strlen(right) + 3);
+                        snprintf(s, strlen(left) + strlen(right) + 3, "%s ^ %s", left, right);
+                        return s;
+                    } else {
+                        char *s = malloc(strlen(left) + strlen(right) + 3);
+                        snprintf(s, strlen(left) + strlen(right) + 3, "%s * %s", left, right);
+                        return s;
+                    }
+                } else {
+                    char *s = malloc(strlen(left) + strlen(right) + 3);
+                    snprintf(s, strlen(left) + strlen(right) + 3, "%s * %s", left, right);
+                    return s;
+                }
+            } else {
+                char *s = malloc(strlen(left) + strlen(right) + 3);
+                strcat(s, left);
+                strcat(s, " * ");
+                strcat(s, right);
+                return s;
+            }
+        case TOKEN_DIVIDE:
+            if (!left || !right){
+                fprintf(stderr, "Error: Invalid syntax tree. Make sure you provide a left and right argument to +.\n");
+                fflush(stderr);
+                is_valid = false;
+                return NULL;
+            }
+            if (tree->left->t->type == TOKEN_NUMBER && tree->right->t->type == TOKEN_NUMBER){
+                char *s = malloc(strlen(left) + strlen(right) + 1); 
+                double times = atof(left) / atof(right);
+                snprintf(s, strlen(left) + strlen(right) + 1, "%g", times);
+                return s;
+            } else if (tree->left->t->type == TOKEN_TEXT && tree->right->t->type == TOKEN_TEXT){
+                TEXT_ENUM text_left = hash_table[hash(tree->left->t->contents)],
+                          text_right = hash_table[hash(tree->right->t->contents)];
+                if ((text_left == 0 || text_right == 0) || (strcmp(tree->left->t->contents, get_key(text_left)) || (strcmp(tree->right->t->contents, get_key(text_right))))){
+                    if (!strcmp(tree->left->t->contents, tree->right->t->contents)){
+                        char *s = malloc(2);
+                        snprintf(s, 2, "1");
+                        return s;
+                    } else {
+                        char *s = malloc(strlen(left) + strlen(right) + 3);
+                        snprintf(s, strlen(left) + strlen(right) + 3, "%s / %s", left, right);
+                        return s;
+                    }
+                } else {
+                    char *s = malloc(strlen(left) + strlen(right) + 3);
+                    snprintf(s, strlen(left) + strlen(right) + 3, "%s / %s", left, right);
+                    return s;
+                }
+            } else {
+                char *s = malloc(strlen(left) + strlen(right) + 3);
+                strcat(s, left);
+                strcat(s, " * ");
+                strcat(s, right);
+            }
+        case TOKEN_EQUALS:
+            // make sure left side is only a string
+            if (tree->left->t->type != TOKEN_TEXT){
+                fprintf(stderr, "Error: Invalid syntax tree\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            // also make sure there's nothing but text, so left should have no children
+            } else if (tree->left->left || tree->left->right){
+                fprintf(stderr, "Error: Invalid syntax tree\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+
+            char *s = malloc(strlen(right) + 1);
+            strcat(s, right);
+            // check if variable already exists
+            if (check_if_variable(tree->left->t->contents)){
+                reassign_variable(tree->left->t->contents, s);
+                is_valid = false;
+                printf("%s = %s\n", tree->left->t->contents, s);
+            } else {
+                // otherwise make a new variable
+                variable *v = malloc(sizeof(variable));
+                char* name = malloc(strlen(tree->left->t->contents) + 1);
+                strcpy(name, tree->left->t->contents);
+                
+                v->name = name; // preventing freeing when tree is freed
+                v->value = s;
+                add_variable(v);
+                is_valid = false;
+                printf("%s = %s\n", tree->left->t->contents, s);
+            }
+            return 0;
+        case TOKEN_TEXT: {
+            // check if it's a function
+            TEXT_ENUM text = hash_table[hash(tree->t->contents)];
+            if (text != 0 && !strcmp(tree->t->contents, get_key(text))){
+                double d = lookup(tree->t->func.text, (Node**)tree->t->func.parameters, tree->t->func.param_count);
+                char *s = malloc(strlen(tree->t->contents) + 3);
+                snprintf(s, strlen(tree->t->contents) + 3, "%f", d);
+                return s;
+            } else {
+                // just return the variable 
+                char *var_name = malloc(strlen(tree->t->contents) + 3);
+                strcpy(var_name, tree->t->contents);
+                return var_name;
+            }
+        }
+        default:
+            printf("token type: %d\n", tree->t->type);
+            return "TODO";
     }
-    char *left = evaluate_exact(tree->left);
-    char *right = evaluate_exact(tree->right);
-    char *str = malloc(sizeof(char) * 100);
-    sprintf(str, "%s%s", left, right);
-    return str;
 }

@@ -4,12 +4,12 @@
 bool is_valid;
 
 bool radians;
-int64_t precision;
+bool approximate;
 
 void initialize_vars(){
     is_valid = true;
     radians = true;
-    precision = -1; 
+    approximate = false; 
 }
 
 int set_var(char* var, char* val){
@@ -20,14 +20,14 @@ int set_var(char* var, char* val){
                     radians = atoi(val);
                     break;
                 case 1:
-                    // todo
+                    approximate = atoi(val);
                     break;
             }
             return 0;
         }
     }
 
-    fprintf(stderr, "Unknown variable: %s\n", var);
+    fprintf(stderr, "\nUnknown variable: %s\n", var);
     fflush(stderr);
     return 1;
 }

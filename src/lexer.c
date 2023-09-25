@@ -30,6 +30,8 @@ TOKEN_TYPE get_associated_state(char c){
             return TOKEN_POW;
         case ',':
             return TOKEN_COMMA;
+        case '=':
+            return TOKEN_EQUALS;
         default:
             return TOKEN_FALLBACK;
     }

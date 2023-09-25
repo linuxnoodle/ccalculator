@@ -7,12 +7,12 @@ extern bool is_valid;
 
 // env variables
 extern bool radians;
-extern int64_t precision;
+extern bool approximate;
 
 #define VARIABLE_COUNT 2
 static char* calc_variables[VARIABLE_COUNT] = {
     "radians",
-    "precision"
+    "approximate"
 };
 
 void initialize_vars();

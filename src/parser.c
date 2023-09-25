@@ -48,20 +48,30 @@ int *get_precedences(Tokens tokens){
             case TOKEN_NUMBER:
                 precedences[i] = -1;
                 break;
+            case TOKEN_EQUALS:
+                precedences[i] = 1;
+                break;
             case TOKEN_PLUS:
             case TOKEN_MINUS:
-                precedences[i] = 1 + parentheses * 10;
+                precedences[i] = 2 + parentheses * 10;
                 break;
             case TOKEN_MULTIPLY:
             case TOKEN_DIVIDE:
-                precedences[i] = 2 + parentheses * 10;
-                break;
-            case TOKEN_POW:
                 precedences[i] = 3 + parentheses * 10;
                 break;
-            case TOKEN_TEXT:
+            case TOKEN_POW:
                 precedences[i] = 4 + parentheses * 10;
                 break;
+            case TOKEN_TEXT: {
+                // check if function
+                TEXT_ENUM t = hash_table[hash(tokens.tokens[i].contents)];
+                if (t != 0 && !strcmp(tokens.tokens[i].contents, get_key(t)))
+                    precedences[i] = 5 + parentheses * 10;
+                else {
+                    precedences[i] = -1; // is variable
+                }
+                break;
+            }
             case TOKEN_LPAREN:
                 ++parentheses;
                 break;
@@ -77,6 +87,7 @@ int *get_precedences(Tokens tokens){
         fflush(stderr);
         is_valid = false;
     }
+
     return precedences;
 }
 
@@ -122,7 +133,7 @@ Node *recurse_collect(Tokens tokens, int *precedence, size_t start, size_t end){
     }
 
     Node *node = create_node(&tokens.tokens[lowest_precedence_index]);
-    if (tokens.tokens[start].type == TOKEN_TEXT){
+    if (tokens.tokens[lowest_precedence_index].type == TOKEN_TEXT){
         node->left = NULL;
         node->right = NULL;
         TEXT_ENUM name = hash_table[hash(tokens.tokens[start].contents)];
@@ -144,13 +155,6 @@ Node *recurse_collect(Tokens tokens, int *precedence, size_t start, size_t end){
                     ++i;
                 }
 
-                if (parentheses != 0){
-                    fprintf(stderr, "Error: mismatched parentheses\n");
-                    fflush(stderr);
-                    is_valid = false;
-                    return NULL;
-                }
-                
                 size_t groupings_index = 0;
                 size_t *group_start = malloc(sizeof(size_t) * (i - start));
                 group_start[0] = start + 2;
@@ -169,21 +173,27 @@ Node *recurse_collect(Tokens tokens, int *precedence, size_t start, size_t end){
                     //node->t->func.parameters[j] = recurse_collect(tokens, precedence, group_starts[j], group_end[j]);
                     node->t->func.parameters[j] = recurse_collect(tokens, precedence, group_start[j], i - 1);
                 }
-            } else if (name != 0){
-                // get hash for variable 
-                size_t var_hash = variable_hash(tokens.tokens[start].contents);
-                // check if variable exists, making sure hash is not out of bounds
-                /*if (var_hash < variable_count && 
-                    variables variable_hash_table[var_hash] != ){
-                    variable v = variables[variable_hash_table[var_hash]];
-                    if (v.defined){
-                        node->t->contents = v.value;
-                    } else {
-                        
-                    }
-                }*/
+            }
+        } else {
+            // just to prevent segfaults
+            node->t->func.str = tokens.tokens[start].contents;
+            node->t->func.text = FALLBACK; 
+            if (check_if_variable(tokens.tokens[start].contents)){
+                // act as if it's a number
+                node->t->type = TOKEN_NUMBER;
+                node->t->contents = get_contents(tokens.tokens[start].contents);
+                node->t->length = tokens.tokens[start].length;
+            } else {
+                // add it as an undefined variable
+                variable *v = malloc(sizeof(variable));
+                v->name = tokens.tokens[start].contents;
+                v->value = NULL;
+                v->defined = false;
+                add_variable(v);
+                // still going to be FALLBACK LOL
             }
         }
+
         return node;
     } else {
         node->left = recurse_collect(tokens, precedence, start, lowest_precedence_index);

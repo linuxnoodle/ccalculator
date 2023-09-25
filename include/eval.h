@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "parser.h"
+#include <math.h>
 
 #define PI 3.14159265358979323846 
 #define LN_2 0.693147180559945309417232121458176568

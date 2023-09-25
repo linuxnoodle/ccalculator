@@ -62,6 +62,7 @@ int main(int argc, char **argv){
     char *input;
     Tokens t;
     Node *n;
+    char *r;
 
     initialize_table();
     initialize_vars();
@@ -70,28 +71,40 @@ int main(int argc, char **argv){
         fflush(stdout);
 
         input = getln(history, &history_size);
+        printf("\n"); // raw deletes newline
         if (*input == '\0'){
-            printf("\n");
             continue;
         }
+
+        // print help message
+        if (strcmp(input, "help") == 0){
+            printf("Commands:\n");
+            printf("  help - print this message\n");
+            printf("  sin  - get sine of number\n");
+            printf("  cos  - get cosine of number\n");
+            printf("  tan  - get tangent of number\n");
+            printf("  exp  - get e^x of number\n");
+            printf("  ln   - get ln of number\n");
+            printf("  set  - set calculator variable (radians)\n");
+            continue;
+        }
+        
         is_valid = true;
         t = lex(input);
-        /*for (size_t i = 0; i < t.length; i++)
-            printf("%s: ID%d\n", t.tokens[i].contents, t.tokens[i].type);*/
         n = parse(t);
-        //print_tree(n, 0);
+        if (approximate){
+            double d = evaluate_f(n);
+            size_t len = snprintf(NULL, 0, "%f", d);
+            r = malloc(sizeof(char) * (len + 1));
+            sprintf(r, "%f", d);
+        } else
+            r = evaluate_exact(n);
 
-        /*if (!check_token_validity(&t)){
-            destroy_tree(n);
-            destroy_tokens(&t);
-            continue;
-        }*/ // skipping for now LOL
-        if (!is_valid){
-            printf("how");
-            continue;
+        if (is_valid){
+            printf("%s = %s\n", input, r);
         }
-        printf("\n%s = %g\n", input, evaluate_f(n));
         //printf("%s = %s\n", input, evaluate_exact(n));
+        free(r);
         destroy_tree(n);
         destroy_tokens(&t);
 
@@ -102,6 +115,12 @@ int main(int argc, char **argv){
     for (size_t i = 0; i < history_size; i++)
         free(history[i]);
     free(history);
+
+    for (size_t i = 0; i < variable_count; i++){
+        free(variables[i]->name);
+        free(variables[i]->value);
+        free(variables[i]);
+    }
 
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
