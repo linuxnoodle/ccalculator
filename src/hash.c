@@ -14,11 +14,14 @@ void initialize_table(){
     }
 }
 
+// hash function
+// djb2
 size_t hash(char *str){
-    // first two and last character
-    if (strlen(str) < 3) // very efficient! i love imperfect hash tables that are slower than a linear search!!!
-        return 0;
-    return *str + *(str + 1) + *(str + strlen(str) - 1);
+    size_t hash = 5381;
+    int c;
+    while ((c = *str++))
+        hash = ((hash << 5) + hash) + c;
+    return hash % 384;
 }
 
 char *get_key(TEXT_ENUM t){

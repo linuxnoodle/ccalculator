@@ -39,7 +39,7 @@ typedef struct {
     char *str;
 } function;
 
-#define KEYWORD_COUNT 26
+#define KEYWORD_COUNT 25
 // max keyword name length is 15
 __attribute__((__used__))
 static char text_names[KEYWORD_COUNT][16] = {

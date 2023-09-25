@@ -293,6 +293,324 @@ double lookup(TEXT_ENUM type, Node** params, size_t param_count){
     return 0; // def won't cause any problems
 }
 
+char * lookup_exact(TEXT_ENUM type, Node** params, size_t param_count){
+    if (type == FALLBACK){
+        return NULL;
+    }
+
+    if (!params){
+        printf("type: %d\n", type);
+        fprintf(stderr, "\nError: No parameters provided to function.\n");
+        fflush(stderr);
+        is_valid = false;
+        return NULL;
+    }
+    double *evaluated_params = malloc(sizeof(double) * param_count);
+    for (int i = 0; i < param_count; i++){
+        evaluated_params[i] = evaluate_f(params[i]);
+    }
+
+    #define RADIAN_TO_DEGREE PI / 180.0
+    switch (type){ // technically needs to free params but whatever
+        case SIN:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: SIN requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return NULL;
+            }
+
+            double result = sin(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+            switch (fmod(result, PI)){
+                case 0:
+                    return "0";
+                case PI/6:
+                    return "1 / 2";
+                case PI/4:
+                    return "1 / sqrt(2)";
+                case PI/3:
+                    return "sqrt(3) / 2";
+                case PI/2:
+                    return "1";
+                default:{
+                    char *func_name = malloc(sizeof(char) * 5 + strlen(params[0]->t->contents)
+                    strcpy(func_name, "sin(");
+                    strcat(func_name, params[0]->t->contents);
+                    strcat(func_name, ")");
+                    return func_name;
+                }
+            }
+        case COS: 
+            if (param_count != 1){
+                fprintf(stderr, "\nError: COS requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return NULL;
+            }
+                
+            switch (fmod(result, PI)){
+                case 0:
+                    return "1";
+                case PI/6:
+                    return "1 / sqrt(2)";
+                case PI/4:
+                    return "sqrt(3) / 2";
+                case PI/3:
+                    return "1 / 2";
+                case PI/2:
+                    return "0";
+                default:{
+                    char *func_name = malloc(sizeof(char) * 5 + strlen(params[0]->t->contents)
+                    strcpy(func_name, "cos(");
+                    strcat(func_name, params[0]->t->contents);
+                    strcat(func_name, ")");
+                    return func_name;
+                }
+        case TAN:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: TAN requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return NULL;
+            }
+
+            switch (fmod(result, PI)){
+                case 0:
+                    return "0";
+                case PI/6:
+                    return "1 / 2";
+                case PI/4:
+                    return "1 / sqrt(3)";
+                case PI/3:
+                    return "sqrt(3)";
+                case PI/2:
+                    return "1";
+                default:{
+                    char *func_name = malloc(sizeof(char) * 5 + strlen(params[0]->t->contents)
+                    strcpy(func_name, "sin(");
+                    strcat(func_name, params[0]->t->contents);
+                    strcat(func_name, ")");
+                    return func_name;
+        case LN:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: LN requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return NULL;
+            }
+
+            if (evaluated_params[0] <= 0){
+                fprintf(stderr, "\nError: Cannot take log of non-positive number.\n");
+                fflush(stderr);
+                is_valid = false;
+                return NULL;
+            }
+            
+            return log(evaluated_params[0]);
+        case EXP:
+            return exp(evaluated_params[0]);
+        case SQRT:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: SQRT requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+
+            if (evaluated_params[0] < 0){
+                fprintf(stderr, "\nError: Cannot take square root of negative number.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            
+            return pow(evaluated_params[0], 0.5);
+        case FACTORIAL:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: FACTORIAL requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+
+            if (evaluated_params[0] < 0){
+                fprintf(stderr, "\nError: Cannot take factorial of negative number.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            } 
+            
+            return factorial((int)evaluated_params[0]);
+        case NPR:
+            if (param_count != 2){
+                fprintf(stderr, "\nError: NPR requires two parameters.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            if (evaluated_params[0] < 0 || evaluated_params[1] < 0){
+                fprintf(stderr, "\nError: Cannot take NPR of negative number.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            } 
+            
+            return npr(evaluated_params[0], evaluated_params[1]);
+        case NCR:
+            if (param_count != 2){
+                fprintf(stderr, "\nError: NCR requires two parameters.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+
+            if (evaluated_params[0] < 0 || evaluated_params[1] < 0){
+                fprintf(stderr, "\nError: Cannot take NCR of negative number.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            } 
+            
+            return ncr(evaluated_params[0], evaluated_params[1]);
+        case SEC: 
+            if (param_count != 1){
+                fprintf(stderr, "\nError: SEC requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return 1 / cos(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case CSC:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: CSC requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return 1 / sin(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case COT:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: COT requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return 1 / tan(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case ASIN:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ASIN requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return asin(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case ACOS:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ACOS requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return acos(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case ATAN:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ATAN requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return atan(evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case SINH:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: SINH requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return sinh(evaluated_params[0]);
+        case COSH:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: COSH requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return cosh(evaluated_params[0]);
+        case TANH:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: TANH requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return tanh(evaluated_params[0]);
+        case ASINH:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ASINH requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return asinh(evaluated_params[0]);
+        case ACOSH:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ACOSH requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return acosh(evaluated_params[0]);
+        case ATANH:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ATANH requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return atanh(evaluated_params[0]);
+        case ASEC:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ASEC requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return acos(1 / evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case ACSC:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ACSC requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return asin(1 / evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case ACOT:
+            if (param_count != 1){
+                fprintf(stderr, "\nError: ACOT requires one parameter.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            return atan(1 / evaluated_params[0]) * ((radians) ? 1 : RADIAN_TO_DEGREE);
+        case SET:
+            if (param_count != 2){
+                fprintf(stderr, "\nError: SET requires two parameters.\n");
+                fflush(stderr);
+                is_valid = false;
+                return 0;
+            }
+            if (!set_var(params[0]->t->contents, params[1]->t->contents))
+                printf("\nSet environment variable '%s' to %s\n", params[0]->t->contents, params[1]->t->contents);
+            is_valid = false;
+            break;
+        default:
+            fprintf(stderr, "Error: Invalid name\n");
+            fflush(stderr);
+            is_valid = false;
+            return 0; 
+    }
+    return 0;
+
 double evaluate_f(Node *tree){
     if (variables == NULL){
         variables = malloc(sizeof(variable));
@@ -584,7 +902,7 @@ char *evaluate_exact(Node* tree){
             // check if it's a function
             TEXT_ENUM text = hash_table[hash(tree->t->contents)];
             if (text != 0 && !strcmp(tree->t->contents, get_key(text))){
-                double d = lookup(tree->t->func.text, (Node**)tree->t->func.parameters, tree->t->func.param_count);
+                double d = lookup_exact(tree->t->func.text, (Node**)tree->t->func.parameters, tree->t->func.param_count);
                 char *s = malloc(strlen(tree->t->contents) + 3);
                 snprintf(s, strlen(tree->t->contents) + 3, "%f", d);
                 return s;
